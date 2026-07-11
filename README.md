@@ -32,8 +32,9 @@ pip install -r requirements.txt
 backend 폴더 내에 .env 파일을 생성하고 공공데이터 API 키를 입력합니다.
 
 주의: URL 인코딩이 되지 않은 평문(Decoding) 키를 사용해야 합니다.
-
-> KISED_SERVICE_KEY=여기에_인증키_입력
+```bash
+KISED_SERVICE_KEY=여기에_인증키_입력
+```
 
 5. 서버 실행
 ```Bash

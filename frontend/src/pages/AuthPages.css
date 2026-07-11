@@ -1,0 +1,101 @@
+.auth-main {
+  width: 100%;
+  max-width: 392px;
+  margin: 0 auto;
+  padding: 56px 24px 48px;
+}
+.auth-title {
+  text-align: center;
+  margin-bottom: 30px;
+}
+.auth-title h1 {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.auth-title p {
+  font-size: 13.5px;
+  color: var(--sub);
+  margin-top: 8px;
+}
+
+.auth-social-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0;
+  color: var(--sub-2);
+  font-size: 12px;
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth-terms-row {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--sub-3);
+  cursor: pointer;
+  margin-top: 2px;
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 0;
+}
+.auth-checkbox {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  flex: none;
+  display: grid;
+  place-items: center;
+}
+.auth-checkbox.checked {
+  background: var(--primary);
+  border: 1px solid var(--primary);
+  color: #fff;
+}
+.auth-checkbox.unchecked {
+  background: #fff;
+  border: 1.5px solid #cbd0d8;
+}
+
+.auth-submit {
+  width: 100%;
+  height: 50px;
+  margin-top: 2px;
+}
+.auth-submit.disabled {
+  background: #e2e4e8;
+  color: #9aa1ab;
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 13px;
+  color: var(--sub);
+}
+.auth-footer a {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+}

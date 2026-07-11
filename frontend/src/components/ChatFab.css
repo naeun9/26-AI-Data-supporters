@@ -1,0 +1,135 @@
+.chat-fab {
+  position: fixed;
+  right: 28px;
+  bottom: 88px;
+  z-index: 150;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: var(--dark);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow-fab);
+}
+.chat-fab:hover {
+  background: var(--dark-hover);
+}
+
+.chat-popup {
+  position: fixed;
+  right: 28px;
+  bottom: 88px;
+  z-index: 160;
+  width: 340px;
+  border: 1px solid var(--social-border);
+  border-radius: 18px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-popup);
+  overflow: hidden;
+  animation: riseIn 0.18s ease;
+}
+
+.chat-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.chat-popup-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 14px;
+  font-weight: 800;
+}
+.chat-popup-title .chat-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+
+.chat-popup-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.chat-popup-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: none;
+  color: var(--sub-2);
+}
+.chat-popup-icon-btn:hover {
+  background: var(--hover-bg);
+}
+
+.chat-popup-messages {
+  height: 400px;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.chat-popup-input-row {
+  padding: 12px;
+  border-top: 1px solid var(--line-soft);
+  display: flex;
+  gap: 7px;
+  background: #fff;
+}
+
+.chat-popup-input {
+  flex: 1;
+  border: 1px solid var(--input-border);
+  border-radius: var(--r-pill);
+  padding: 9px 15px;
+  font-size: 13px;
+  outline: none;
+  background: var(--input-bg);
+}
+.chat-popup-input:focus {
+  border-color: var(--primary);
+}
+
+.chat-popup-send {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.chat-popup-send:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+.chat-popup-send:disabled {
+  opacity: 0.6;
+}
+
+@media (max-width: 480px) {
+  .chat-popup {
+    right: 14px;
+    left: 14px;
+    width: auto;
+    bottom: 88px;
+  }
+  .chat-fab {
+    right: 18px;
+    bottom: 18px;
+  }
+}

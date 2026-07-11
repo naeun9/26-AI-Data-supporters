@@ -1,0 +1,251 @@
+.detail-status {
+  padding: 80px 0;
+  text-align: center;
+  color: var(--sub);
+}
+
+.detail-main {
+  padding-top: 32px;
+  padding-bottom: 100px;
+  max-width: 960px;
+}
+
+.detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--sub);
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 0;
+  margin-bottom: 22px;
+}
+.detail-back:hover {
+  color: var(--ink);
+}
+
+.detail-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 목록/알림 등 다른 화면의 D-day 뱃지(.badge)는 안 건드리고 상세페이지에서만 확대 */
+.detail-dday-badge {
+  font-size: 14px;
+  font-weight: 800;
+  padding: 5px 13px;
+}
+
+.detail-title {
+  font-size: 31px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+  margin-top: 8px;
+}
+
+.detail-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--sub);
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.detail-meta-dot {
+  color: var(--sub-2);
+}
+
+/* 요약 카드 */
+.detail-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  padding: 22px 24px;
+  margin-top: 24px;
+}
+.detail-summary-item {
+  min-width: 0;
+}
+.detail-summary-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--sub);
+}
+.detail-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+/* 요약 정보 칩은 눌러도 아무 동작이 없으니 호버 강조 없이 단색으로 고정 */
+.detail-chip-group .chip {
+  cursor: default;
+}
+.detail-chip-group .chip:hover {
+  border-color: var(--line);
+  color: var(--sub-3);
+}
+
+/* 본문 / 신청방법 — 요약 카드와 같은 카드 톤으로 통일해 경계를 명확히 */
+.detail-section {
+  margin-top: 24px;
+}
+.detail-section.card {
+  padding: 22px 24px;
+}
+.detail-section h2 {
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 14px;
+}
+.detail-content {
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--sub-3);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.detail-apply-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+}
+.detail-apply-methods li {
+  display: flex;
+  gap: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.detail-apply-method-label {
+  flex: none;
+  width: 52px;
+  font-weight: 700;
+  color: var(--primary);
+}
+.detail-apply-method-value {
+  color: var(--sub-3);
+  word-break: break-word;
+}
+.detail-apply-method-link {
+  color: var(--primary);
+  text-decoration: none;
+}
+.detail-apply-method-link:hover {
+  text-decoration: underline;
+}
+.detail-apply-method-link-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.detail-apply-method-link-row .detail-apply-method-link {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.detail-copy-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-btn);
+  background: #fff;
+  color: var(--sub-2);
+}
+.detail-copy-btn:hover {
+  color: var(--primary);
+  border-color: var(--soft-2);
+  background: var(--soft);
+}
+.detail-apply-method-muted {
+  color: var(--sub-2);
+}
+
+.detail-excl {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.detail-excl-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--sub);
+  margin-bottom: 6px;
+}
+.detail-excl p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--sub-3);
+  white-space: pre-wrap;
+}
+
+/* 하단 액션 — 페이지 유일한 주 CTA */
+.detail-actions {
+  margin-top: 24px;
+  padding: 22px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.detail-apply-btn {
+  text-decoration: none;
+}
+.detail-contact {
+  font-size: 12.5px;
+  color: var(--sub-2);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  text-align: right;
+}
+
+.detail-notfound {
+  padding: 60px 0;
+  text-align: center;
+}
+.detail-notfound-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.detail-notfound-sub {
+  font-size: 14px;
+  color: var(--sub);
+  margin-top: 8px;
+}
+.detail-notfound-cta {
+  display: inline-flex;
+  margin-top: 20px;
+  text-decoration: none;
+}
+
+@media (max-width: 680px) {
+  .detail-summary {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .detail-title {
+    font-size: 22px;
+  }
+  .detail-section.card {
+    padding: 18px;
+  }
+  .detail-actions {
+    padding: 18px;
+  }
+}

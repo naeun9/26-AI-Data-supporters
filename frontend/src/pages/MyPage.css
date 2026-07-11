@@ -1,0 +1,236 @@
+.my-main {
+  padding-top: 40px;
+  padding-bottom: 80px;
+}
+
+.my-profile-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card-lg);
+  padding: 26px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 22px;
+}
+.my-profile-top {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+.my-profile-avatar {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: var(--soft);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.my-profile-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--primary);
+}
+.my-profile-name {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-top: 4px;
+}
+.my-profile-date {
+  font-size: 12.5px;
+  color: var(--sub-2);
+  margin-top: 5px;
+}
+
+.my-profile-stats {
+  display: flex;
+  gap: 14px;
+}
+.my-stat-pill {
+  text-align: center;
+  background: var(--dash-bg);
+  border-radius: 12px;
+  padding: 14px 10px;
+  min-width: 64px;
+}
+.my-stat-pill.hot {
+  background: var(--urgent-hot-bg);
+}
+.my-stat-pill.hot .my-stat-value,
+.my-stat-pill.hot .my-stat-label {
+  color: var(--urgent-hot-text);
+}
+.my-stat-pill.soft {
+  background: var(--soft);
+}
+.my-stat-pill.soft .my-stat-value,
+.my-stat-pill.soft .my-stat-label {
+  color: var(--primary);
+}
+.my-stat-value {
+  display: block;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.my-stat-label {
+  display: block;
+  font-size: 12px;
+  color: var(--sub);
+  margin-top: 2px;
+}
+
+.my-type-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card-lg);
+  padding: 26px 28px;
+  margin-top: 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.my-type-card-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+.my-type-card-main {
+  flex: 1;
+  min-width: 240px;
+}
+.my-type-card-title {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin-bottom: 9px;
+}
+.my-type-card p {
+  font-size: 14.5px;
+  color: var(--sub-3);
+  line-height: 1.65;
+  max-width: 560px;
+}
+.my-type-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+.my-type-tag {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sub-3);
+  background: var(--dash-bg);
+  border-radius: var(--r-pill);
+  padding: 7px 14px;
+}
+.my-type-tag.strength {
+  color: var(--primary);
+  background: var(--soft);
+}
+.my-type-cta {
+  flex: none;
+  border-radius: 10px;
+  padding: 11px 17px;
+  font-size: 13.5px;
+}
+
+.my-split {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 28px;
+  margin-top: 32px;
+  align-items: start;
+}
+.my-panel {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card-lg);
+  box-shadow: var(--shadow-card);
+  padding: 22px 24px;
+}
+.my-panel h2 {
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 14px;
+}
+.my-panel-sub {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sub-2);
+}
+
+.my-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.my-empty {
+  color: var(--sub-2);
+  font-size: 13.5px;
+  padding: 30px 0;
+  text-align: center;
+  background: var(--chip-bg-2);
+  border-radius: var(--r-card);
+}
+
+.my-bookmark-row {
+  background: var(--chip-bg-2);
+  border: 1px solid #eef0f3;
+  border-radius: 13px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.my-bookmark-body {
+  flex: 1;
+  min-width: 0;
+}
+.my-bookmark-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.my-bookmark-short {
+  font-size: 12.5px;
+  color: var(--sub);
+  margin-top: 4px;
+}
+
+.my-chat-item {
+  text-align: left;
+  background: var(--chip-bg-2);
+  border: 1px solid #eef0f3;
+  border-radius: 13px;
+  padding: 16px 18px;
+}
+.my-chat-item:hover {
+  border-color: #d4dae2;
+}
+.my-chat-title {
+  font-size: 14.5px;
+  font-weight: 700;
+}
+.my-chat-sub {
+  font-size: 12.5px;
+  color: var(--sub);
+  margin-top: 5px;
+}
+
+@media (max-width: 760px) {
+  .my-split {
+    grid-template-columns: 1fr;
+  }
+}

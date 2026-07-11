@@ -1,0 +1,30 @@
+.login-locked {
+  text-align: center;
+  padding: 64px 24px;
+}
+.login-locked-icon {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--soft);
+  color: var(--primary);
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+.login-locked-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.login-locked-desc {
+  font-size: 13px;
+  color: var(--sub-2);
+  margin-top: 6px;
+}
+.login-locked-cta {
+  margin-top: 18px;
+  font-size: 13px;
+  padding: 9px 20px;
+}

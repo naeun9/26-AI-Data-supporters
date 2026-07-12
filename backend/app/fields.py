@@ -86,5 +86,22 @@ FIELD_LABELS = {
         "manu_prc": "제품 가격",
         "hmpg": "제품 URL",
     },
-    "education": {},  # 설계서 미제공 → 실제 응답으로 확정 필요
+    # 설계서 미제공 → 실제 응답 실측으로 확정(2026-07-13 조사, totalCount 338)
+    "education": {
+        "lctr_nm": "강의 제목",
+        "lctr_istc": "강의 소개",
+        "kywrd": "키워드",
+        "lctr_pg_url": "강의 상세페이지 URL",
+        "play_time": "재생시간(초)",
+        "view_cnt": "조회수",
+        "reg_dt": "등록일자",
+        "mdfcn_dt": "수정일자",
+        "lctr_lclss_cd": "강의 대분류 코드 (실측: 전량 단일값이라 분류 축으로 무의미)",
+        "lctr_mclss_cd": "강의 중분류 코드 (실측: 5개 값 — 주제 분류로 사용)",
+        "lctr_sclss_cd": "강의 소분류 코드",
+        "rcmd_yn": "추천 여부",
+        "pckg_use_yn": "패키지 사용 여부",
+        "aliac_yn": "별칭 사용 여부",
+        "sbtitl_expsr_use_yn": "부제목 노출 사용 여부",
+    },
 }

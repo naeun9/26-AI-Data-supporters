@@ -40,10 +40,10 @@ export function DonutChart({
           strokeLinecap="round"
           transform="rotate(-90 70 70)"
         />
-        <text x="70" y="66" textAnchor="middle" fontSize="23" fontWeight="800" fill="var(--ink)">
+        <text x="70" y="66" textAnchor="middle" fontSize="26.5" fontWeight="800" fill="var(--ink)">
           {a.toFixed(1)}%
         </text>
-        <text x="70" y="87" textAnchor="middle" fontSize="12" fill="var(--sub)">
+        <text x="70" y="87" textAnchor="middle" fontSize="14" fill="var(--sub)">
           {labelA}
         </text>
       </svg>

@@ -16,14 +16,14 @@
   display: grid;
   place-items: center;
   font-weight: 800;
-  font-size: 13px;
+  font-size: 16.5px;
   flex: none;
 }
 
 .chat-bubble {
   padding: 13px 16px;
   border-radius: 16px;
-  font-size: 14.5px;
+  font-size: 18px;
   line-height: 1.55;
 }
 .chat-bubble.bot {
@@ -48,7 +48,7 @@
   padding: 16px;
 }
 .chat-rec-title {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--primary);
   margin-bottom: 10px;
@@ -62,7 +62,7 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  font-size: 13.5px;
+  font-size: 17px;
   color: var(--ink);
 }
 .chat-rec-check {
@@ -70,7 +70,7 @@
   flex: none;
 }
 .chat-rec-reason {
-  font-size: 12.5px;
+  font-size: 15.5px;
   color: var(--sub);
   margin-top: 12px;
   padding-top: 12px;

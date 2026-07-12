@@ -8,14 +8,14 @@
   padding: 72px 0 48px;
 }
 .home-hero h1 {
-  font-size: 50px;
+  font-size: 58.5px;
   line-height: 1.22;
   font-weight: 800;
   letter-spacing: -0.03em;
   margin-top: 20px;
 }
 .home-hero p {
-  font-size: 16.5px;
+  font-size: 19px;
   color: var(--sub);
   margin-top: 16px;
 }
@@ -65,7 +65,7 @@
   flex: 1;
   border: none;
   outline: none;
-  font-size: 15px;
+  font-size: 17.5px;
   color: var(--ink);
   background: transparent;
   min-width: 0;
@@ -93,12 +93,12 @@
   margin-bottom: 16px;
 }
 .home-section-head h2 {
-  font-size: 21px;
+  font-size: 24.5px;
   font-weight: 800;
   letter-spacing: -0.02em;
 }
 .home-section-link {
-  font-size: 13.5px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--primary);
   text-decoration: none;
@@ -180,21 +180,21 @@
   margin-bottom: 14px;
 }
 .locked-title {
-  font-size: 20px;
+  font-size: 23.5px;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--ink);
   margin-bottom: 14px;
 }
 .locked-cta {
-  font-size: 13px;
+  font-size: 15.5px;
   padding: 9px 18px;
   white-space: nowrap;
 }
 
 @media (max-width: 680px) {
   .home-hero h1 {
-    font-size: 36px;
+    font-size: 42px;
   }
   .home-grid-2 {
     grid-template-columns: 1fr;

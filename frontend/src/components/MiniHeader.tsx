@@ -17,7 +17,7 @@ export function MiniHeader({ title, right, maxWidth = 1120, sticky = false, blur
       <div className="mini-header-inner" style={{ maxWidth, padding: `0 ${padding}px` }}>
         <Link to="/" className="brand-link">
           <span className="brand-mark">K</span>
-          <span className="brand-name" style={{ fontSize: title ? 15 : 16, fontWeight: title ? 700 : 800 }}>
+          <span className="brand-name" style={{ fontSize: title ? 17.5 : 18.5, fontWeight: title ? 700 : 800 }}>
             {title ?? "창업메이트"}
           </span>
         </Link>

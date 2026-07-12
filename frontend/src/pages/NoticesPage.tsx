@@ -1,13 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { ChevronDown, ChevronLeft, ChevronRight, Bookmark } from "lucide-react";
-import { getNotices } from "../api/client";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { ChevronDown, Bookmark, Lock } from "lucide-react";
+import { getNotices, getMatchedNotices } from "../api/client";
+import type { MatchProfile } from "../api/client";
 import { STAGE_GROUPS } from "../api/kised";
+import { STARTUP_TYPES_BY_KEY } from "../data/startupTypes";
 import { useAppState } from "../state/AppState";
 import { NoticeRow } from "../components/NoticeRow";
 import { LoginLocked } from "../components/LoginLocked";
+import { Pagination } from "../components/Pagination";
 import type { Notice } from "../types";
 import "./NoticesPage.css";
+
+/** 맞춤 결과가 이 값 이하면 "조건을 넓히면 더 볼 수 있어요" 안내를 덧붙인다. */
+const FEW_RESULTS_THRESHOLD = 8;
 
 type TabKey = "all" | "matched" | "soon" | "bookmarked";
 
@@ -19,61 +25,45 @@ const TABS: { key: TabKey; label: string }[] = [
 ];
 
 const PAGE_SIZE = 15;
-const CHIP_GROUP_SIZE = 10;
 
-function Pagination({ page, totalPages, onChange }: { page: number; totalPages: number; onChange: (p: number) => void }) {
-  if (totalPages <= 1) return null;
-  const groupStart = Math.floor((page - 1) / CHIP_GROUP_SIZE) * CHIP_GROUP_SIZE + 1;
-  const groupEnd = Math.min(groupStart + CHIP_GROUP_SIZE - 1, totalPages);
-  const chips = Array.from({ length: groupEnd - groupStart + 1 }, (_, i) => groupStart + i);
-  const showLastPage = groupEnd < totalPages;
+/** "내 맞춤" 결과가 0건일 때 — 조건 중 어떤 걸 빼면 몇 건이 나오는지 실제로 계산해서 안내(결과를 억지로 늘리지 않음). */
+function MatchEmptyState({
+  notices,
+  profile,
+  onViewAll,
+}: {
+  notices: Notice[];
+  profile: MatchProfile;
+  onViewAll: () => void;
+}) {
+  const relaxations: { label: string; count: number }[] = [];
+  if (profile.region) {
+    relaxations.push({ label: "지역", count: getMatchedNotices(notices, { ...profile, region: null }).length });
+  }
+  if (profile.stage) {
+    relaxations.push({ label: "연차", count: getMatchedNotices(notices, { ...profile, stage: null }).length });
+  }
+  if (profile.type) {
+    relaxations.push({ label: "유형", count: getMatchedNotices(notices, { ...profile, type: null }).length });
+  }
+  const best = relaxations.filter((r) => r.count > 0).sort((a, b) => b.count - a.count)[0];
 
   return (
-    <nav className="notices-pagination" aria-label="페이지 네비게이션">
-      <button
-        className="notices-page-arrow"
-        disabled={page === 1}
-        onClick={() => onChange(page - 1)}
-        aria-label="이전 페이지"
-      >
-        <ChevronLeft size={16} />
+    <div className="notices-empty">
+      <div className="notices-empty-title">설정하신 조건에 딱 맞는 공고가 지금은 없어요</div>
+      <div className="notices-empty-sub">
+        {best ? `${best.label} 조건을 빼면 ${best.count}건을 볼 수 있어요` : "조건을 조정하거나 전체 공고를 확인해보세요"}
+      </div>
+      <button className="btn btn-primary notices-empty-cta" onClick={onViewAll}>
+        전체 공고 보기
       </button>
-      {chips.map((p) => (
-        <button
-          key={p}
-          className={`notices-page-btn${p === page ? " active" : ""}`}
-          onClick={() => onChange(p)}
-          aria-current={p === page ? "page" : undefined}
-        >
-          {p}
-        </button>
-      ))}
-      {showLastPage && (
-        <>
-          <span className="notices-page-ellipsis">…</span>
-          <button
-            className="notices-page-btn"
-            onClick={() => onChange(totalPages)}
-            aria-label={`마지막 페이지 (${totalPages})`}
-          >
-            {totalPages}
-          </button>
-        </>
-      )}
-      <button
-        className="notices-page-arrow"
-        disabled={page === totalPages}
-        onClick={() => onChange(page + 1)}
-        aria-label="다음 페이지"
-      >
-        <ChevronRight size={16} />
-      </button>
-    </nav>
+    </div>
   );
 }
 
 export function NoticesPage() {
-  const { loggedIn, unlocked, myType, bookmarks } = useAppState();
+  const { loggedIn, unlocked, myType, myStage, myRegion, bookmarks } = useAppState();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const tab = (searchParams.get("tab") as TabKey) ?? "all";
   const locked = (tab === "matched" || tab === "bookmarked") && !loggedIn;
@@ -96,15 +86,24 @@ export function NoticesPage() {
     [notices],
   );
 
+  // "내 맞춤" 탭 전용 — 프로필(유형/연차/지역) 기준 매칭. 지역/연차 수동 드롭다운과는 별개(그 결과 안에서 추가로 좁힘).
+  const hasProfile = Boolean(myType || myStage || myRegion);
+  const matchProfile: MatchProfile = { type: myType, stage: myStage, region: myRegion };
+  const matchedNotices = useMemo(
+    () => getMatchedNotices(notices, { type: myType, stage: myStage, region: myRegion }),
+    [notices, myType, myStage, myRegion],
+  );
+  const matchLabel = [myType && STARTUP_TYPES_BY_KEY[myType]?.name, myStage, myRegion].filter(Boolean).join(" · ");
+
   const filtered = useMemo(() => {
-    let list = notices;
-    if (tab === "matched") list = list.filter((n) => n.recommended);
+    let list = tab === "matched" ? matchedNotices : notices;
     if (tab === "soon") list = list.filter((n) => n.urgency !== "none");
     if (tab === "bookmarked") list = list.filter((n) => bookmarks.includes(n.id));
     if (region) list = list.filter((n) => n.region === region);
     if (stage) list = list.filter((n) => n.stage === stage);
-    return [...list].sort((a, b) => (sort === "soon" ? a.ddayNum - b.ddayNum : b.ddayNum - a.ddayNum));
-  }, [notices, tab, region, stage, sort, bookmarks]);
+    const effectiveSort = tab === "soon" ? "soon" : sort;
+    return [...list].sort((a, b) => (effectiveSort === "soon" ? a.ddayNum - b.ddayNum : b.ddayNum - a.ddayNum));
+  }, [notices, matchedNotices, tab, region, stage, sort, bookmarks]);
 
   useEffect(() => {
     setPage(1);
@@ -113,6 +112,9 @@ export function NoticesPage() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const pageItems = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  // 로그인은 했지만 유형/연차/지역 중 아무 것도 설정 안 한 상태 — "맞춤" 자체를 계산할 기준이 없음.
+  const matchedNoProfile = tab === "matched" && !locked && !hasProfile;
 
   function setTab(next: TabKey) {
     setSearchParams(next === "all" ? {} : { tab: next });
@@ -140,17 +142,26 @@ export function NoticesPage() {
         ))}
       </div>
 
-      {!locked && <div className="notices-count">총 {filtered.length}건</div>}
+      {tab === "matched" && !locked && !matchedNoProfile && matchLabel && (
+        <div className="notices-match-banner">
+          <span className="notices-match-label">맞춤 기준</span>
+          <span className="chip notices-match-chip">{matchLabel}</span>
+        </div>
+      )}
 
-      {!locked && (
+      {!locked && !matchedNoProfile && <div className="notices-count">총 {filtered.length}건</div>}
+
+      {!locked && !matchedNoProfile && (
         <div className="notices-filters">
-          <label className="filter-select-wrap">
-            <select className="filter-select" value={sort} onChange={(e) => setSort(e.target.value as "soon" | "recent")}>
-              <option value="recent">최신순</option>
-              <option value="soon">마감임박순</option>
-            </select>
-            <ChevronDown size={15} className="filter-select-icon" />
-          </label>
+          {tab !== "soon" && (
+            <label className="filter-select-wrap">
+              <select className="filter-select" value={sort} onChange={(e) => setSort(e.target.value as "soon" | "recent")}>
+                <option value="recent">최신순</option>
+                <option value="soon">마감임박순</option>
+              </select>
+              <ChevronDown size={15} className="filter-select-icon" />
+            </label>
+          )}
           <label className="filter-select-wrap">
             <select className="filter-select" value={region} onChange={(e) => setRegion(e.target.value)}>
               <option value="">지역 전체</option>
@@ -185,6 +196,24 @@ export function NoticesPage() {
               : "내 유형에 맞는 공고를 보려면 로그인해주세요"
           }
         />
+      ) : matchedNoProfile ? (
+        <div className="login-locked">
+          <span className="login-locked-icon">
+            <Lock size={18} />
+          </span>
+          <div className="login-locked-title">아직 맞춤 조건이 없어요</div>
+          <div className="login-locked-desc">유형 검사를 하거나 마이페이지에서 연차·지역을 설정하면 맞춤 공고를 볼 수 있어요</div>
+          <div className="notices-empty-actions">
+            <button className="btn btn-primary login-locked-cta" onClick={() => navigate("/test")}>
+              검사 시작
+            </button>
+            <button className="btn btn-ghost login-locked-cta" onClick={() => navigate("/my")}>
+              마이페이지로
+            </button>
+          </div>
+        </div>
+      ) : tab === "matched" && filtered.length === 0 ? (
+        <MatchEmptyState notices={notices} profile={matchProfile} onViewAll={() => setTab("all")} />
       ) : (
         <>
           <div className="notices-list">
@@ -194,6 +223,10 @@ export function NoticesPage() {
           </div>
 
           <Pagination page={currentPage} totalPages={totalPages} onChange={setPage} />
+
+          {tab === "matched" && filtered.length <= FEW_RESULTS_THRESHOLD && (
+            <div className="notices-hint">조건을 넓히면 더 많은 공고를 볼 수 있어요</div>
+          )}
 
           {tab === "bookmarked" && filtered.length === 0 && (
             <div className="notices-empty">

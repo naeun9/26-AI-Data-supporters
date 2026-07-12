@@ -7,6 +7,10 @@ interface Profile {
   nickname: string;
   myType: TypeKey | null;
   testedAt: string | null;
+  /** 창업기간(biz_enyy) 토큰 하나 — 예비창업자/1년미만/.../10년미만 중 하나, 미설정 시 null. */
+  myStage: string | null;
+  /** supt_regin 값 하나 — 미설정 시 null(전 지역). */
+  myRegion: string | null;
   bookmarks: string[];
   conversations: Conversation[];
   activeConversationId: string | null;
@@ -19,6 +23,8 @@ const EMPTY_PROFILE: Profile = {
   nickname: "",
   myType: null,
   testedAt: null,
+  myStage: null,
+  myRegion: null,
   bookmarks: [],
   conversations: [],
   activeConversationId: null,
@@ -65,6 +71,8 @@ interface AppStateValue extends Profile {
   signup: (nickname: string) => void;
   completeTest: (type: TypeKey) => void;
   resetTest: () => void;
+  setMyStage: (stage: string | null) => void;
+  setMyRegion: (region: string | null) => void;
   toggleBookmark: (id: string) => void;
   isBookmarked: (id: string) => boolean;
   createConversation: (seedMessages: ChatMessage[]) => string;
@@ -119,6 +127,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       completeTest: (type: TypeKey) =>
         setProfile((p) => ({ ...p, myType: type, testedAt: new Date().toISOString() })),
       resetTest: () => setProfile((p) => ({ ...p, myType: null, testedAt: null })),
+      setMyStage: (stage: string | null) => setProfile((p) => ({ ...p, myStage: stage })),
+      setMyRegion: (region: string | null) => setProfile((p) => ({ ...p, myRegion: region })),
       toggleBookmark: (id: string) =>
         setProfile((p) => {
           const next = new Set(p.bookmarks);

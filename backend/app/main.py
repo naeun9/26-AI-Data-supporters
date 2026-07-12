@@ -177,6 +177,52 @@ async def get_announcement_detail(pbanc_sn: int):
     raise HTTPException(404, f"공고를 찾을 수 없음(마감됐거나 잘못된 번호): {pbanc_sn}")
 
 
+# ── 창업에듀(교육영상) — 338건뿐이라 announcement처럼 페이지 나눠 모을 필요 없이
+# 한 번에 전량 받아서 slim 필드만 캐싱. 서버 필터(lctr_lclss_cd 등)도 KISED가
+# 무시하는 걸 확인해서(공고 때와 동일한 함정) 주제 필터는 프론트에서 클라이언트단으로 처리. ──
+_EDUCATION_FETCH_SIZE = 500
+_EDUCATION_CACHE: dict = {"items": None, "expires_at": 0.0}
+_EDUCATION_TTL_SECONDS = 3 * 24 * 60 * 60
+
+_EDUCATION_SLIM_FIELDS = [
+    "lctr_nm",
+    "lctr_istc",
+    "kywrd",
+    "lctr_pg_url",
+    "play_time",
+    "view_cnt",
+    "lctr_mclss_cd",
+    "reg_dt",
+]
+
+
+def _slim_education(item: dict) -> dict:
+    return {k: item.get(k) for k in _EDUCATION_SLIM_FIELDS}
+
+
+async def _get_education_items() -> list[dict]:
+    now = time.time()
+    if _EDUCATION_CACHE["items"] is not None and _EDUCATION_CACHE["expires_at"] > now:
+        return _EDUCATION_CACHE["items"]
+
+    payload = await client.call("education", page=1, size=_EDUCATION_FETCH_SIZE)
+    items = extract_items(payload)
+
+    _EDUCATION_CACHE["items"] = items
+    _EDUCATION_CACHE["expires_at"] = now + _EDUCATION_TTL_SECONDS
+    return items
+
+
+@app.get("/api/education/list")
+async def get_education_list():
+    """창업에듀 강의 전량(338건), 화면에 쓰는 필드만 slim하게. 서버 메모리 TTL 캐시."""
+    try:
+        items = await _get_education_items()
+    except RuntimeError as e:
+        raise HTTPException(500, str(e))
+    return {"count": len(items), "items": [_slim_education(it) for it in items]}
+
+
 @app.get("/api/{op}")
 async def get_data(op: str, request: Request):
     """공용 프록시.

@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Copy, ExternalLink } from "lucide-react";
 import { getNoticeDetail } from "../api/client";
+import { ALL_CAREER_PERIODS } from "../api/kised";
 import type { AnnouncementDetail } from "../api/kised";
+import { toAbsoluteHref } from "../utils/url";
 import { BookmarkButton } from "../components/BookmarkButton";
 import { urgencyBadgeClass } from "../components/urgency";
 import { useAppState } from "../state/AppState";
@@ -13,6 +15,17 @@ type LoadState = "loading" | "ready" | "not-found" | "error";
 /** "대학생,일반인,대학" 같은 콤마 나열을 칩으로 쪼개 렌더하기 위한 분리. */
 function splitChips(value: string): string[] {
   return value.split(",").map((v) => v.trim()).filter(Boolean);
+}
+
+/** KISED 데이터 전수 조사 기준 실제로 존재하는 신청대상/창업기간 값 전체 집합.
+ * 한 공고가 이 전체를 다 포함하면 "제한 없음(전체)"이라는 뜻이라 칩을 다 나열할 필요가 없다. */
+const ALL_APPLY_TARGETS = new Set(["청소년", "대학생", "일반인", "대학", "연구기관", "일반기업", "1인 창조기업"]);
+const ALL_CAREER_PERIODS_SET = new Set<string>(ALL_CAREER_PERIODS);
+
+function chipsOrAll(value: string, fullSet: Set<string>): string[] {
+  const tokens = splitChips(value);
+  const isAll = tokens.length === fullSet.size && tokens.every((t) => fullSet.has(t));
+  return isAll ? ["전체"] : tokens;
 }
 
 /** 숫자만 남겨 02(서울)는 2-3-4 자리, 그 외 10~11자리는 3-3(4)-4 자리로 하이픈 삽입. */
@@ -28,10 +41,6 @@ function formatPhone(raw: string): string {
   return raw;
 }
 
-function isUrl(value: string): boolean {
-  return /^https?:\/\//i.test(value.trim());
-}
-
 /** KISED가 이메일을 그대로 안 주고 암호화된 토큰으로 내려줄 때가 있음(예: "zYsjhH/N...=") — @ 없으면 그 케이스. */
 function isRealEmail(value: string): boolean {
   return value.includes("@");
@@ -40,7 +49,7 @@ function isRealEmail(value: string): boolean {
 export function NoticeDetailPage() {
   const { sn } = useParams<{ sn: string }>();
   const navigate = useNavigate();
-  const { showToast } = useAppState();
+  const { showToast, myStage } = useAppState();
   const [notice, setNotice] = useState<AnnouncementDetail | null>(null);
   const [state, setState] = useState<LoadState>("loading");
 
@@ -128,7 +137,7 @@ export function NoticeDetailPage() {
         <div className="detail-summary-item">
           <div className="detail-summary-label">신청대상</div>
           <div className="detail-chip-group">
-            {splitChips(notice.applyTargetFull).map((v) => (
+            {chipsOrAll(notice.applyTargetFull, ALL_APPLY_TARGETS).map((v) => (
               <span key={v} className="chip">
                 {v}
               </span>
@@ -138,11 +147,15 @@ export function NoticeDetailPage() {
         <div className="detail-summary-item">
           <div className="detail-summary-label">창업기간</div>
           <div className="detail-chip-group">
-            {splitChips(notice.careerPeriod).map((v) => (
-              <span key={v} className="chip">
-                {v}
-              </span>
-            ))}
+            {chipsOrAll(notice.careerPeriod, ALL_CAREER_PERIODS_SET).map((v) => {
+              const isMine =
+                !!myStage && (v === "전체" ? splitChips(notice.careerPeriod).includes(myStage) : v === myStage);
+              return (
+                <span key={v} className={`chip${isMine ? " chip-mine" : ""}`}>
+                  {v}
+                </span>
+              );
+            })}
           </div>
         </div>
         <div className="detail-summary-item">
@@ -172,13 +185,14 @@ export function NoticeDetailPage() {
           {notice.applyMethods.length > 0 && (
             <ul className="detail-apply-methods">
               {notice.applyMethods.map((m) => {
-                if (m.label === "온라인" && isUrl(m.value)) {
+                const applyLinkHref = m.label === "온라인" ? toAbsoluteHref(m.value) : null;
+                if (applyLinkHref) {
                   return (
                     <li key={m.label}>
                       <span className="detail-apply-method-label">{m.label}</span>
                       <span className="detail-apply-method-link-row">
                         <a
-                          href={m.value}
+                          href={applyLinkHref}
                           target="_blank"
                           rel="noreferrer"
                           className="detail-apply-method-value detail-apply-method-link"

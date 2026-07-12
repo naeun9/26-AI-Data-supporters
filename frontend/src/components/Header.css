@@ -35,20 +35,20 @@
   display: grid;
   place-items: center;
   font-weight: 800;
-  font-size: 15px;
+  font-size: 17.5px;
   flex: none;
 }
 
 .brand-name {
   font-weight: 800;
-  font-size: 16px;
+  font-size: 18.5px;
   letter-spacing: -0.01em;
 }
 
 .site-nav {
   display: flex;
   gap: 28px;
-  font-size: 14px;
+  font-size: 16.5px;
   flex: none;
 }
 
@@ -72,7 +72,7 @@
   left: 50%;
   background: var(--primary);
   color: #fff;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
   white-space: nowrap;
   padding: 7px 12px;
@@ -117,7 +117,7 @@
 }
 
 .header-signup-btn {
-  font-size: 13.5px;
+  font-size: 16px;
   font-weight: 600;
   padding: 8px 12px;
   border-radius: var(--r-btn);
@@ -129,7 +129,7 @@
 }
 
 .header-login-btn {
-  font-size: 13.5px;
+  font-size: 16px;
   font-weight: 700;
   padding: 8px 17px;
 }
@@ -163,11 +163,11 @@
   place-items: center;
   color: var(--primary);
   font-weight: 700;
-  font-size: 13px;
+  font-size: 15.5px;
 }
 
 .header-nickname {
-  font-size: 14px;
+  font-size: 16.5px;
   font-weight: 600;
   color: var(--ink);
 }
@@ -212,7 +212,7 @@
     text-decoration: none;
     color: var(--sub);
     font-weight: 500;
-    font-size: 14.5px;
+    font-size: 17px;
     border-bottom: 1px solid var(--line);
   }
   .site-nav-mobile-link:last-child {

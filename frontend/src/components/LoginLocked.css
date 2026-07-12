@@ -14,17 +14,17 @@
   margin-bottom: 14px;
 }
 .login-locked-title {
-  font-size: 16px;
+  font-size: 18.5px;
   font-weight: 700;
   color: var(--ink);
 }
 .login-locked-desc {
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--sub-2);
   margin-top: 6px;
 }
 .login-locked-cta {
   margin-top: 18px;
-  font-size: 13px;
+  font-size: 15.5px;
   padding: 9px 20px;
 }

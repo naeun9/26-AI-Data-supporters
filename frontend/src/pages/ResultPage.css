@@ -20,19 +20,19 @@
   box-shadow: var(--shadow-halo);
 }
 .result-eyebrow {
-  font-size: 13px;
+  font-size: 15.5px;
   font-weight: 600;
   color: var(--primary);
   margin-top: 20px;
 }
 .result-hero h1 {
-  font-size: 34px;
+  font-size: 40px;
   font-weight: 800;
   letter-spacing: -0.03em;
   margin-top: 8px;
 }
 .result-hero p {
-  font-size: 15.5px;
+  font-size: 18px;
   color: var(--sub-3);
   line-height: 1.6;
   max-width: 480px;
@@ -55,11 +55,11 @@
   margin-bottom: 18px;
 }
 .result-data-title {
-  font-size: 14.5px;
+  font-size: 17px;
   font-weight: 800;
 }
 .result-data-sub {
-  font-size: 12.5px;
+  font-size: 14.5px;
   color: var(--sub-2);
   font-weight: 500;
 }
@@ -72,18 +72,18 @@
   text-align: center;
 }
 .result-data-value {
-  font-size: 25px;
+  font-size: 29.5px;
   font-weight: 800;
   color: var(--ink);
   letter-spacing: -0.02em;
 }
 .result-data-label {
-  font-size: 12.5px;
+  font-size: 14.5px;
   color: var(--sub);
   margin-top: 5px;
 }
 .result-data-footnote {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--sub-2);
   margin-top: 18px;
   padding-top: 14px;
@@ -106,12 +106,12 @@
   box-shadow: var(--shadow-card);
 }
 .result-3col-label {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--sub);
 }
 .result-3col-value {
-  font-size: 15px;
+  font-size: 17.5px;
   font-weight: 700;
   margin-top: 8px;
   letter-spacing: -0.01em;
@@ -123,7 +123,7 @@
   animation-delay: 0.23s;
 }
 .result-notices h2 {
-  font-size: 19px;
+  font-size: 22.5px;
   font-weight: 800;
   letter-spacing: -0.02em;
   margin-bottom: 16px;
@@ -141,14 +141,14 @@
   margin-top: 14px;
 }
 .result-cta-home .btn-text {
-  font-size: 14px;
+  font-size: 16.5px;
   padding: 6px 10px;
 }
 .result-notices .notice-card-meta {
   margin-top: 6px;
 }
 .result-cta-note {
-  font-size: 12.5px;
+  font-size: 14.5px;
   color: var(--sub-2);
   margin-top: 12px;
 }

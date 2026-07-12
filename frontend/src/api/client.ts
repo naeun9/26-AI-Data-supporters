@@ -34,6 +34,39 @@ function matchesType(notice: Notice, type: TypeKey): boolean {
   return STARTUP_TYPES_BY_KEY[type].keywords.some((kw) => notice.field.includes(kw));
 }
 
+function matchesStage(notice: Notice, stage: string): boolean {
+  return notice.careerPeriods.includes(stage);
+}
+
+/** "전국" 공고는 지역 무관하게 항상 매칭 — 특정 지역을 설정한 사용자가 전국 대상 공고를 놓치지 않도록. */
+function matchesRegion(notice: Notice, region: string): boolean {
+  return notice.region === region || notice.region === "전국";
+}
+
+export interface MatchProfile {
+  type?: TypeKey | null;
+  stage?: string | null;
+  region?: string | null;
+}
+
+/**
+ * "내 맞춤" 매칭 — myType/myStage/myRegion 중 설정된 축만 AND로 검사하고, 미설정 축은 조건에서 제외.
+ * 어느 축도 설정 안 됐으면 항상 false(호출부에서 "축 없음" 상태를 따로 처리해야 함).
+ */
+export function matchesProfile(notice: Notice, profile: MatchProfile): boolean {
+  const hasAnyCriteria = Boolean(profile.type || profile.stage || profile.region);
+  if (!hasAnyCriteria) return false;
+  if (profile.type && STARTUP_TYPES_BY_KEY[profile.type] && !matchesType(notice, profile.type)) return false;
+  if (profile.stage && !matchesStage(notice, profile.stage)) return false;
+  if (profile.region && !matchesRegion(notice, profile.region)) return false;
+  return true;
+}
+
+/** notices 전체에서 matchesProfile을 만족하는 것만 recommended: true로 표시해 반환. 축이 하나도 없으면 빈 배열. */
+export function getMatchedNotices(notices: Notice[], profile: MatchProfile): Notice[] {
+  return notices.filter((n) => matchesProfile(n, profile)).map((n) => ({ ...n, recommended: true }));
+}
+
 export async function getNotices(params?: { field?: string; region?: string; type?: string }): Promise<Notice[]> {
   let notices = await fetchAnnouncements();
   if (params?.field) notices = notices.filter((n) => n.field.includes(params.field!));

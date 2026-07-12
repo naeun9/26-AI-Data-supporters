@@ -17,6 +17,8 @@ export interface Notice {
   region: string;
   target: string;
   stage: string;
+  /** biz_enyy 토큰 목록(창업기간) — myStage 기반 맞춤 매칭용. */
+  careerPeriods: string[];
   recommended?: boolean;
 }
 

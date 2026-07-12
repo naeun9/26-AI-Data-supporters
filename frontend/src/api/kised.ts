@@ -34,10 +34,18 @@ interface RawAnnouncementDetail extends RawAnnouncement {
 /** Fixed filter option list for NoticesPage — keep in sync with clusterStage below. */
 export const STAGE_GROUPS = ["예비창업자", "기존 창업자"] as const;
 
+/** biz_enyy 실제 값 체계(전수 조사로 확정된 7개, 창업기간) — 연차 선택 UI/상세페이지 칩 판정 공용. */
+export const ALL_CAREER_PERIODS = ["예비창업자", "1년미만", "2년미만", "3년미만", "5년미만", "7년미만", "10년미만"] as const;
+
 /** biz_enyy real values (창업기간): "예비창업자", "1년미만"~"10년미만" — 예비창업자 포함 여부로만 2분할. */
 function clusterStage(bizEnyy: string | null): string {
   const tokens = (bizEnyy ?? "").split(",").map((s) => s.trim()).filter(Boolean);
   return tokens.some((t) => t.includes("예비창업자")) ? "예비창업자" : "기존 창업자";
+}
+
+/** 공고의 biz_enyy 토큰 목록(창업기간). 연차 기반 맞춤 매칭(myStage)에 사용. */
+function careerTokens(bizEnyy: string | null): string[] {
+  return (bizEnyy ?? "").split(",").map((s) => s.trim()).filter(Boolean);
 }
 
 const PALETTE = [
@@ -87,6 +95,7 @@ function mapAnnouncement(raw: RawAnnouncement): Notice {
   const field = raw.supt_biz_clsfc || "기타";
   const target = shortTarget(raw.aply_trgt);
   const stage = clusterStage(raw.biz_enyy);
+  const careerPeriods = careerTokens(raw.biz_enyy);
   const { dday, ddayNum, urgency } = computeDday(parseKisedDate(raw.pbanc_rcpt_end_dt));
   const palette = paletteFor(region);
 
@@ -105,6 +114,7 @@ function mapAnnouncement(raw: RawAnnouncement): Notice {
     region,
     target,
     stage,
+    careerPeriods,
     recommended: false,
   };
 }

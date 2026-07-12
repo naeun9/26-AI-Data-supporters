@@ -11,6 +11,7 @@ import { TestPage } from "./pages/TestPage";
 import { ResultPage } from "./pages/ResultPage";
 import { NoticesPage } from "./pages/NoticesPage";
 import { NoticeDetailPage } from "./pages/NoticeDetailPage";
+import { EducationPage } from "./pages/EducationPage";
 import { ChatPage } from "./pages/ChatPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { MyPage } from "./pages/MyPage";
@@ -25,6 +26,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/notices" element={<NoticesPage />} />
             <Route path="/notices/:sn" element={<NoticeDetailPage />} />
+            <Route path="/education" element={<EducationPage />} />
             <Route
               path="/chat"
               element={

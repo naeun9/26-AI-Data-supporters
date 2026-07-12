@@ -14,7 +14,7 @@
 .test-progress-row {
   display: flex;
   justify-content: space-between;
-  font-size: 13px;
+  font-size: 15.5px;
   color: var(--sub);
   margin-bottom: 10px;
 }
@@ -41,7 +41,7 @@
   margin: 52px 0 36px;
 }
 .test-question-block h1 {
-  font-size: 26px;
+  font-size: 30.5px;
   font-weight: 800;
   line-height: 1.42;
   letter-spacing: -0.02em;
@@ -63,7 +63,7 @@
   border: 1.5px solid var(--line);
   border-radius: var(--r-card);
   padding: 18px 20px;
-  font-size: 15.5px;
+  font-size: 18px;
   color: var(--ink);
   font-weight: 500;
 }
@@ -85,7 +85,7 @@
   color: var(--sub);
   display: grid;
   place-items: center;
-  font-size: 13px;
+  font-size: 15.5px;
   font-weight: 700;
   flex: none;
 }
@@ -101,5 +101,5 @@
   min-height: 36px;
 }
 .test-nav-row .btn-text {
-  font-size: 14px;
+  font-size: 16.5px;
 }

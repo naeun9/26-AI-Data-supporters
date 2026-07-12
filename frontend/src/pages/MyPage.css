@@ -29,20 +29,61 @@
   flex: none;
 }
 .my-profile-label {
-  font-size: 12.5px;
+  font-size: 14.5px;
   font-weight: 600;
   color: var(--primary);
 }
 .my-profile-name {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 800;
   letter-spacing: -0.02em;
   margin-top: 4px;
 }
 .my-profile-date {
-  font-size: 12.5px;
+  font-size: 14.5px;
   color: var(--sub-2);
   margin-top: 5px;
+}
+
+.my-profile-meta {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.my-profile-meta-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.my-profile-meta-label {
+  font-size: 14.5px;
+  color: var(--sub-2);
+  font-weight: 600;
+}
+.my-profile-meta-select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.my-profile-meta-select {
+  appearance: none;
+  border: 1px solid var(--line);
+  border-radius: var(--r-btn);
+  background: #fff;
+  padding: 6px 26px 6px 12px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.my-profile-meta-select:hover {
+  border-color: var(--primary);
+}
+.my-profile-meta-select-icon {
+  position: absolute;
+  right: 8px;
+  color: var(--sub-2);
+  pointer-events: none;
 }
 
 .my-profile-stats {
@@ -72,14 +113,14 @@
 }
 .my-stat-value {
   display: block;
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--ink);
 }
 .my-stat-label {
   display: block;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--sub);
   margin-top: 2px;
 }
@@ -109,13 +150,13 @@
   min-width: 240px;
 }
 .my-type-card-title {
-  font-size: 15px;
+  font-size: 17.5px;
   font-weight: 800;
   letter-spacing: -0.01em;
   margin-bottom: 9px;
 }
 .my-type-card p {
-  font-size: 14.5px;
+  font-size: 17px;
   color: var(--sub-3);
   line-height: 1.65;
   max-width: 560px;
@@ -127,7 +168,7 @@
   margin-top: 16px;
 }
 .my-type-tag {
-  font-size: 13px;
+  font-size: 15.5px;
   font-weight: 600;
   color: var(--sub-3);
   background: var(--dash-bg);
@@ -142,7 +183,7 @@
   flex: none;
   border-radius: 10px;
   padding: 11px 17px;
-  font-size: 13.5px;
+  font-size: 16px;
 }
 
 .my-split {
@@ -160,12 +201,12 @@
   padding: 22px 24px;
 }
 .my-panel h2 {
-  font-size: 16px;
+  font-size: 18.5px;
   font-weight: 800;
   margin-bottom: 14px;
 }
 .my-panel-sub {
-  font-size: 13px;
+  font-size: 15.5px;
   font-weight: 500;
   color: var(--sub-2);
 }
@@ -178,7 +219,7 @@
 
 .my-empty {
   color: var(--sub-2);
-  font-size: 13.5px;
+  font-size: 16px;
   padding: 30px 0;
   text-align: center;
   background: var(--chip-bg-2);
@@ -199,12 +240,12 @@
   min-width: 0;
 }
 .my-bookmark-title {
-  font-size: 15px;
+  font-size: 17.5px;
   font-weight: 700;
   letter-spacing: -0.01em;
 }
 .my-bookmark-short {
-  font-size: 12.5px;
+  font-size: 14.5px;
   color: var(--sub);
   margin-top: 4px;
 }
@@ -220,11 +261,11 @@
   border-color: #d4dae2;
 }
 .my-chat-title {
-  font-size: 14.5px;
+  font-size: 17px;
   font-weight: 700;
 }
 .my-chat-sub {
-  font-size: 12.5px;
+  font-size: 14.5px;
   color: var(--sub);
   margin-top: 5px;
 }

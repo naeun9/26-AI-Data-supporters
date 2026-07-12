@@ -61,7 +61,7 @@ export function HomePage() {
         <h1>
           어떤 창업을 준비하세요?
           <br />
-          <span className="home-hero-highlight">AI가 맞는 지원사업</span>을 찾아드려요
+          <span className="home-hero-highlight">AI가 맞춤 지원사업</span>을 찾아드려요
         </h1>
         <p>창업진흥원 공공데이터 기반으로 현실성 있는 답변을 제공합니다.</p>
 

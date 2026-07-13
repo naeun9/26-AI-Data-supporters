@@ -6,6 +6,7 @@ import type { EducationLecture } from "../api/education";
 import { STARTUP_TYPES_BY_KEY } from "../data/startupTypes";
 import { useAppState } from "../state/AppState";
 import { Pagination } from "../components/Pagination";
+import { LoginLocked } from "../components/LoginLocked";
 import "./EducationPage.css";
 
 type SortKey = "views" | "recent";
@@ -19,7 +20,7 @@ const TABS: { key: TabKey; label: string }[] = [
 ];
 
 export function EducationPage() {
-  const { myType } = useAppState();
+  const { loggedIn, myType } = useAppState();
   const navigate = useNavigate();
   const [tab, setTab] = useState<TabKey>("myType");
   const [lectures, setLectures] = useState<EducationLecture[]>([]);
@@ -78,7 +79,9 @@ export function EducationPage() {
           </div>
 
           {tab === "myType" ? (
-            myType && myTypeEducation ? (
+            !loggedIn ? (
+              <LoginLocked desc="맞춤 교육을 보려면 로그인해주세요" />
+            ) : myType && myTypeEducation ? (
               <section className="edu-recommend">
                 <div className="edu-toolbar">
                   <h2 className="edu-recommend-title">

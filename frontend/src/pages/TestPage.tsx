@@ -64,6 +64,7 @@ export function TestPage() {
             <div className="test-question-block">
               <span className="badge badge-soft">준비 단계</span>
               <h1>창업 준비 단계가 어떻게 되세요?</h1>
+              <p className="test-question-note">나중에 프로필에서 언제든 다시 수정할 수 있어요</p>
             </div>
 
             <div className="test-options">

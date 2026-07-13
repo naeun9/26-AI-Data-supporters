@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import { useAppState } from "../state/AppState";
 import { getNotices, getType } from "../api/client";
@@ -176,14 +176,14 @@ export function MyPage() {
           <div className="my-list">
             {bookmarkedNotices.length > 0 ? (
               bookmarkedNotices.map((n) => (
-                <div key={n.id} className="my-bookmark-row">
+                <Link key={n.id} to={`/notices/${n.id}`} className="my-bookmark-row">
                   <span className={urgencyBadgeClass(n.urgency)}>{n.dday}</span>
                   <div className="my-bookmark-body">
                     <div className="my-bookmark-title">{n.title}</div>
                     <div className="my-bookmark-short">{deadlineFromDday(n.ddayNum)}</div>
                   </div>
                   <BookmarkButton id={n.id} />
-                </div>
+                </Link>
               ))
             ) : (
               <div className="my-empty">아직 북마크한 공고가 없어요</div>

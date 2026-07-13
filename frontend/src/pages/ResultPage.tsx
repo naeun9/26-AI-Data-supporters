@@ -112,7 +112,6 @@ export function ResultPage() {
                 홈으로
               </button>
             </div>
-            <div className="result-cta-note">결과는 프로필로 저장되어 홈·마이페이지·챗봇에서 재사용됩니다</div>
           </div>
         </div>
       </main>

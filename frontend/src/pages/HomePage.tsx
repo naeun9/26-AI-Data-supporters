@@ -6,6 +6,7 @@ import { getNotices } from "../api/client";
 import type { Notice } from "../types";
 import { NoticeCard } from "../components/NoticeCard";
 import { NoticeRow } from "../components/NoticeRow";
+import { ProfileNudge } from "../components/ProfileNudge";
 import "./HomePage.css";
 
 const QUICK_CHIPS = [
@@ -16,7 +17,7 @@ const QUICK_CHIPS = [
 ];
 
 export function HomePage() {
-  const { loggedIn, unlocked, myType, showToast } = useAppState();
+  const { loggedIn, unlocked, myType, myStage, myRegion, showToast } = useAppState();
   const navigate = useNavigate();
   const [input, setInput] = useState("");
   const [matched, setMatched] = useState<Notice[]>([]);
@@ -112,11 +113,14 @@ export function HomePage() {
         </div>
 
         {unlocked ? (
-          <div className="home-grid-2">
-            {matched.map((n) => (
-              <NoticeCard key={n.id} notice={n} />
-            ))}
-          </div>
+          <>
+            <ProfileNudge myStage={myStage} myRegion={myRegion} />
+            <div className="home-grid-2">
+              {matched.map((n) => (
+                <NoticeCard key={n.id} notice={n} />
+              ))}
+            </div>
+          </>
         ) : (
           <div className="locked-wrap">
             <div className="locked-skeleton">

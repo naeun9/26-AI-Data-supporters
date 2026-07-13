@@ -69,7 +69,6 @@ function mapEducation(raw: RawEducation): EducationLecture {
 }
 
 const MATCH_MIN = 3;
-const MATCH_TARGET = 6;
 
 /** 공고 추천(matchesType)과 같은 방식 — 유형 키워드가 kywrd 또는 제목에 포함되면 매칭. */
 function matchesEducationType(lecture: EducationLecture, type: TypeKey): boolean {
@@ -79,23 +78,18 @@ function matchesEducationType(lecture: EducationLecture, type: TypeKey): boolean
 
 export interface MyTypeEducationResult {
   lectures: EducationLecture[];
-  /** 매칭이 3건 미만이라 조회수 상위로 대체한 경우. */
+  /** 매칭이 3건 미만이라 조회수 상위 전체로 대체한 경우. */
   isFallback: boolean;
 }
 
-/** "내 유형 추천 교육" — 매칭 3건 미만이면 억지로 채우지 않고 조회수 상위로 자연스럽게 대체. */
+/** "내 유형 추천 교육" — 매칭 3건 미만이면 억지로 채우지 않고 조회수 상위 전체로 자연스럽게 대체.
+ * 개수 제한 없이 다 돌려주고 페이지네이션은 화면(EducationPage)에서 처리. */
 export function getMyTypeEducation(lectures: EducationLecture[], type: TypeKey): MyTypeEducationResult {
   const matched = lectures.filter((l) => matchesEducationType(l, type));
   if (matched.length >= MATCH_MIN) {
-    return {
-      lectures: [...matched].sort((a, b) => b.viewCount - a.viewCount).slice(0, MATCH_TARGET),
-      isFallback: false,
-    };
+    return { lectures: [...matched].sort((a, b) => b.viewCount - a.viewCount), isFallback: false };
   }
-  return {
-    lectures: [...lectures].sort((a, b) => b.viewCount - a.viewCount).slice(0, MATCH_TARGET),
-    isFallback: true,
-  };
+  return { lectures: [...lectures].sort((a, b) => b.viewCount - a.viewCount), isFallback: true };
 }
 
 let cache: Promise<EducationLecture[]> | null = null;

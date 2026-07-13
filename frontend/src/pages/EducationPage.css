@@ -13,22 +13,53 @@
   margin-top: 8px;
 }
 
-.edu-recommend {
-  margin-top: 28px;
-  padding-bottom: 28px;
+.edu-loading {
+  padding: 80px 0;
+  text-align: center;
+  color: var(--sub);
+  font-size: 16px;
+}
+
+.edu-tabs {
+  display: flex;
+  gap: 28px;
   border-bottom: 1px solid var(--line);
+  margin-top: 22px;
+}
+.edu-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 0 0 14px;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--sub);
+}
+.edu-tab:hover {
+  color: var(--ink);
+}
+.edu-tab.active {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+  font-weight: 700;
+}
+
+.edu-recommend {
+  margin-top: 24px;
 }
 .edu-recommend-title {
   font-size: 20px;
   font-weight: 800;
   letter-spacing: -0.01em;
-  margin-bottom: 14px;
+}
+.edu-recommend-title-point {
+  color: var(--primary);
 }
 
 .edu-prompt {
   text-align: center;
   padding: 40px 24px;
-  margin-top: 28px;
+  margin-top: 24px;
   background: var(--chip-bg-2);
   border-radius: var(--r-card-lg);
 }
@@ -110,7 +141,7 @@
 }
 
 .edu-card-title {
-  font-size: 17.5px;
+  font-size: 19.5px;
   font-weight: 700;
   letter-spacing: -0.01em;
   line-height: 1.4;

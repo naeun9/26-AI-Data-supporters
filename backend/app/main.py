@@ -13,6 +13,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import config, fields
+from .industries import tag_industries
 from .kised_client import KisedClient, extract_items
 
 app = FastAPI(title="KISED 공공데이터 프록시", version="0.2.0")
@@ -65,6 +66,7 @@ _ANNOUNCEMENT_SLIM_FIELDS = [
     "supt_regin",
     "aply_trgt",
     "biz_enyy",
+    "biz_trgt_age",
     "pbanc_rcpt_bgng_dt",
     "pbanc_rcpt_end_dt",
     "detl_pg_url",
@@ -88,7 +90,10 @@ _ANNOUNCEMENT_DETAIL_FIELDS = _ANNOUNCEMENT_SLIM_FIELDS + [
 
 
 def _slim_announcement(item: dict) -> dict:
-    return {k: item.get(k) for k in _ANNOUNCEMENT_SLIM_FIELDS}
+    slim = {k: item.get(k) for k in _ANNOUNCEMENT_SLIM_FIELDS}
+    # industries: KISED 원본엔 없는 필드 — 제목+내용 키워드로 우리가 부가 태깅(부가가치 레이어).
+    slim["industries"] = tag_industries(item.get("biz_pbanc_nm") or "", item.get("pbanc_ctnt") or "")
+    return slim
 
 
 def _detail_announcement(item: dict) -> dict:

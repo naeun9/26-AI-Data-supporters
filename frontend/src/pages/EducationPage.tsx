@@ -9,19 +9,29 @@ import { Pagination } from "../components/Pagination";
 import "./EducationPage.css";
 
 type SortKey = "views" | "recent";
+type TabKey = "myType" | "all";
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 9;
+
+const TABS: { key: TabKey; label: string }[] = [
+  { key: "myType", label: "맞춤 교육" },
+  { key: "all", label: "전체 교육" },
+];
 
 export function EducationPage() {
   const { myType } = useAppState();
   const navigate = useNavigate();
+  const [tab, setTab] = useState<TabKey>("myType");
   const [lectures, setLectures] = useState<EducationLecture[]>([]);
+  const [loading, setLoading] = useState(true);
   const [topic, setTopic] = useState("");
   const [sort, setSort] = useState<SortKey>("views");
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    fetchEducationLectures().then(setLectures);
+    fetchEducationLectures()
+      .then(setLectures)
+      .finally(() => setLoading(false));
   }, []);
 
   const myTypeEducation = useMemo(
@@ -39,73 +49,105 @@ export function EducationPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [topic, sort]);
+  }, [topic, sort, tab]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const activeList = tab === "myType" ? (myTypeEducation?.lectures ?? []) : filtered;
+  const totalPages = Math.max(1, Math.ceil(activeList.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
-  const pageItems = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const pageItems = activeList.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   return (
     <main className="container edu-main">
       <h1>창업교육</h1>
       <p className="edu-sub">창업진흥원 창업에듀 영상으로 배우는 실전 지식</p>
 
-      {myType && myTypeEducation ? (
-        <section className="edu-recommend">
-          <h2 className="edu-recommend-title">
-            {myTypeEducation.isFallback
-              ? "딱 맞는 추천이 없어 인기 강의를 보여드려요"
-              : `${STARTUP_TYPES_BY_KEY[myType].name}에게 추천하는 교육`}
-          </h2>
-          <div className="edu-grid">
-            {myTypeEducation.lectures.map((l) => (
-              <EducationCard key={l.id} lecture={l} />
+      {loading ? (
+        <div className="edu-loading">불러오는 중…</div>
+      ) : (
+        <>
+          <div className="edu-tabs">
+            {TABS.map((t) => (
+              <button
+                key={t.key}
+                className={`edu-tab${tab === t.key ? " active" : ""}`}
+                onClick={() => setTab(t.key)}
+              >
+                {t.label}
+              </button>
             ))}
           </div>
-        </section>
-      ) : (
-        <div className="edu-prompt">
-          <div className="edu-prompt-title">유형 검사하면 맞춤 교육을 볼 수 있어요</div>
-          <button className="btn btn-primary edu-prompt-cta" onClick={() => navigate("/test")}>
-            검사 시작
-          </button>
-        </div>
+
+          {tab === "myType" ? (
+            myType && myTypeEducation ? (
+              <section className="edu-recommend">
+                <div className="edu-toolbar">
+                  <h2 className="edu-recommend-title">
+                    {myTypeEducation.isFallback ? (
+                      "딱 맞는 추천이 없어 인기 강의를 보여드려요"
+                    ) : (
+                      <>
+                        <span className="edu-recommend-title-point">{STARTUP_TYPES_BY_KEY[myType].name}</span>
+                        에게 추천하는 교육
+                      </>
+                    )}
+                  </h2>
+                  <span className="edu-count">총 {myTypeEducation.lectures.length}건</span>
+                </div>
+                <div className="edu-grid">
+                  {pageItems.map((l) => (
+                    <EducationCard key={l.id} lecture={l} />
+                  ))}
+                </div>
+                <Pagination page={currentPage} totalPages={totalPages} onChange={setPage} />
+              </section>
+            ) : (
+              <div className="edu-prompt">
+                <div className="edu-prompt-title">유형 검사하면 맞춤 교육을 볼 수 있어요</div>
+                <button className="btn btn-primary edu-prompt-cta" onClick={() => navigate("/test")}>
+                  검사 시작
+                </button>
+              </div>
+            )
+          ) : (
+            <>
+              <div className="edu-topics">
+                <button className={`chip${topic === "" ? " active" : ""}`} onClick={() => setTopic("")}>
+                  전체
+                </button>
+                {EDU_TOPIC_ORDER.map((code) => (
+                  <button
+                    key={code}
+                    className={`chip${topic === code ? " active" : ""}`}
+                    onClick={() => setTopic(code)}
+                  >
+                    {EDU_TOPIC_LABELS[code]}
+                  </button>
+                ))}
+              </div>
+
+              <div className="edu-toolbar">
+                <span className="edu-count">총 {filtered.length}건</span>
+                <div className="edu-sort-toggle">
+                  <button className={sort === "views" ? "active" : ""} onClick={() => setSort("views")}>
+                    조회수순
+                  </button>
+                  <button className={sort === "recent" ? "active" : ""} onClick={() => setSort("recent")}>
+                    최신순
+                  </button>
+                </div>
+              </div>
+
+              <div className="edu-grid">
+                {pageItems.map((l) => (
+                  <EducationCard key={l.id} lecture={l} />
+                ))}
+              </div>
+
+              <Pagination page={currentPage} totalPages={totalPages} onChange={setPage} />
+            </>
+          )}
+        </>
       )}
-
-      <div className="edu-topics">
-        <button className={`chip${topic === "" ? " active" : ""}`} onClick={() => setTopic("")}>
-          전체
-        </button>
-        {EDU_TOPIC_ORDER.map((code) => (
-          <button
-            key={code}
-            className={`chip${topic === code ? " active" : ""}`}
-            onClick={() => setTopic(code)}
-          >
-            {EDU_TOPIC_LABELS[code]}
-          </button>
-        ))}
-      </div>
-
-      <div className="edu-toolbar">
-        <span className="edu-count">총 {filtered.length}건</span>
-        <div className="edu-sort-toggle">
-          <button className={sort === "views" ? "active" : ""} onClick={() => setSort("views")}>
-            조회수순
-          </button>
-          <button className={sort === "recent" ? "active" : ""} onClick={() => setSort("recent")}>
-            최신순
-          </button>
-        </div>
-      </div>
-
-      <div className="edu-grid">
-        {pageItems.map((l) => (
-          <EducationCard key={l.id} lecture={l} />
-        ))}
-      </div>
-
-      <Pagination page={currentPage} totalPages={totalPages} onChange={setPage} />
     </main>
   );
 }

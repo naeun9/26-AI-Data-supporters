@@ -11,8 +11,11 @@ interface RawAnnouncement {
   supt_regin: string | null;
   aply_trgt: string | null;
   biz_enyy: string | null;
+  biz_trgt_age: string | null;
   pbanc_rcpt_end_dt: string | null;
   detl_pg_url: string | null;
+  /** KISED 원본엔 없음 — 백엔드가 제목+내용 키워드로 부가 태깅한 업종. */
+  industries: string[] | null;
 }
 
 interface RawAnnouncementDetail extends RawAnnouncement {
@@ -37,6 +40,19 @@ export const STAGE_GROUPS = ["예비창업자", "기존 창업자"] as const;
 /** biz_enyy 실제 값 체계(전수 조사로 확정된 7개, 창업기간) — 연차 선택 UI/상세페이지 칩 판정 공용. */
 export const ALL_CAREER_PERIODS = ["예비창업자", "1년미만", "2년미만", "3년미만", "5년미만", "7년미만", "10년미만"] as const;
 
+/** backend/app/industries.py의 INDUSTRY_KEYWORDS 키와 반드시 동일하게 유지 — 업종 필터 드롭다운 순서. */
+export const INDUSTRY_OPTIONS = [
+  "정보통신·IT",
+  "제조",
+  "도소매·유통",
+  "숙박·음식점",
+  "교육서비스",
+  "전문·과학·기술서비스",
+  "예술·스포츠·여가",
+  "보건·복지",
+  "전 업종 공통",
+] as const;
+
 /** biz_enyy real values (창업기간): "예비창업자", "1년미만"~"10년미만" — 예비창업자 포함 여부로만 2분할. */
 function clusterStage(bizEnyy: string | null): string {
   const tokens = (bizEnyy ?? "").split(",").map((s) => s.trim()).filter(Boolean);
@@ -46,6 +62,15 @@ function clusterStage(bizEnyy: string | null): string {
 /** 공고의 biz_enyy 토큰 목록(창업기간). 연차 기반 맞춤 매칭(myStage)에 사용. */
 function careerTokens(bizEnyy: string | null): string[] {
   return (bizEnyy ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+}
+
+/** biz_trgt_age 실제 값 체계(전수 조사로 확정된 3개): "만 20세 미만" / "만 20세 이상 ~ 만 39세 이하" / "만 40세 이상".
+ * "만 40세 이상" 토큰이 없으면(=39세 이하로 국한) 청년창업 대상으로 본다.
+ * "만 40세 이상"을 포함하는 조합이 292건 중 258건(88%)이라 포함 기준으로 잡으면 필터가 사실상 전체를 매칭해버려서,
+ * 39세 이하로 국한된 공고만 골라내는 배타 기준을 쓴다(실측 292건 중 34건). */
+function isYouthTargeted(bizTrgtAge: string | null): boolean {
+  const tokens = (bizTrgtAge ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  return tokens.length > 0 && !tokens.includes("만 40세 이상");
 }
 
 const PALETTE = [
@@ -61,6 +86,11 @@ function paletteFor(id: string) {
   let hash = 0;
   for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
   return PALETTE[hash % PALETTE.length];
+}
+
+/** supt_biz_clsfc에 "기술개발(R&amp;D)"처럼 HTML 엔티티가 그대로 온 사례가 있어 디코딩. */
+function decodeHtmlEntities(value: string): string {
+  return value.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
 }
 
 function shortTarget(aplyTrgt: string | null) {
@@ -92,10 +122,11 @@ function mapAnnouncement(raw: RawAnnouncement): Notice {
   const id = String(raw.pbanc_sn);
   const org = raw.pbanc_ntrp_nm || raw.sprv_inst || "창업진흥원";
   const region = raw.supt_regin || "전국";
-  const field = raw.supt_biz_clsfc || "기타";
+  const field = decodeHtmlEntities(raw.supt_biz_clsfc || "기타");
   const target = shortTarget(raw.aply_trgt);
   const stage = clusterStage(raw.biz_enyy);
   const careerPeriods = careerTokens(raw.biz_enyy);
+  const youthTargeted = isYouthTargeted(raw.biz_trgt_age);
   const { dday, ddayNum, urgency } = computeDday(parseKisedDate(raw.pbanc_rcpt_end_dt));
   const palette = paletteFor(region);
 
@@ -115,6 +146,8 @@ function mapAnnouncement(raw: RawAnnouncement): Notice {
     target,
     stage,
     careerPeriods,
+    youthTargeted,
+    industries: raw.industries ?? [],
     recommended: false,
   };
 }
@@ -174,7 +207,7 @@ function mapAnnouncementDetail(raw: RawAnnouncementDetail): AnnouncementDetail {
   const id = String(raw.pbanc_sn);
   const org = raw.pbanc_ntrp_nm || raw.sprv_inst || "창업진흥원";
   const region = raw.supt_regin || "전국";
-  const field = raw.supt_biz_clsfc || "기타";
+  const field = decodeHtmlEntities(raw.supt_biz_clsfc || "기타");
   const target = shortTarget(raw.aply_trgt);
   const stage = clusterStage(raw.biz_enyy);
   const { dday, ddayNum, urgency } = computeDday(parseKisedDate(raw.pbanc_rcpt_end_dt));

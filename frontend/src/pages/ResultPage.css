@@ -147,12 +147,6 @@
 .result-notices .notice-card-meta {
   margin-top: 6px;
 }
-.result-cta-note {
-  font-size: 14.5px;
-  color: var(--sub-2);
-  margin-top: 12px;
-}
-
 @media (max-width: 600px) {
   .result-data-grid,
   .result-3col {

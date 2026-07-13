@@ -275,7 +275,7 @@ export function DashboardPage() {
                 a={data.employment.employed}
                 b={data.employment.notEmployed}
                 labelA="취업 상태"
-                labelB="취업 경험 없음"
+                labelB="미취업 상태"
                 emphasis
                 revealed={revealed.has("dsec2")}
               />
@@ -321,7 +321,7 @@ export function DashboardPage() {
                         className="dash-bar-fill prep"
                         style={{
                           background: PREP_PAL[rankByLabel.get(r.label) ?? 0],
-                          height: `${scaledHeight(r.months, months, 45)}%`,
+                          height: `${Math.max(scaledHeight(r.months, months), 32)}%`,
                           transform: `scaleY(${revealed.has("dsec3") ? 1 : 0})`,
                         }}
                       />

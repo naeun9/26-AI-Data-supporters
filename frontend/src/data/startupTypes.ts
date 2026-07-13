@@ -20,7 +20,7 @@ export const STARTUP_TYPES: StartupTypeWithKeywords[] = [
     data: [
       { value: `${industryRow("전문 과학 및 기술 서비스업").gradRate.toFixed(1)}%`, label: "대졸 이상 비율" },
       { value: `${industryRow("전문 과학 및 기술 서비스업").prepMonths.toFixed(1)}개월`, label: "평균 준비기간" },
-      { value: `${industryRow("전문 과학 및 기술 서비스업").employedRate.toFixed(1)}%`, label: "취업 경험 비율" },
+      { value: `${industryRow("전문 과학 및 기술 서비스업").employedRate.toFixed(1)}%`, label: "창업 전 취업 비율" },
     ],
   },
   {
@@ -66,7 +66,7 @@ export const STARTUP_TYPES: StartupTypeWithKeywords[] = [
     industryGroup: "건설업",
     keywords: ["제조", "건설", "경력", "전문서비스", "이직"],
     data: [
-      { value: `${industryRow("건설업").employedRate.toFixed(1)}%`, label: "취업 경험 비율" },
+      { value: `${industryRow("건설업").employedRate.toFixed(1)}%`, label: "창업 전 취업 비율" },
       { value: `${industryRow("건설업").gradRate.toFixed(1)}%`, label: "대졸 이상 비율" },
       { value: `${industryRow("건설업").prepMonths.toFixed(1)}개월`, label: "평균 준비기간" },
     ],
@@ -84,7 +84,7 @@ export const STARTUP_TYPES: StartupTypeWithKeywords[] = [
     data: [
       { value: `${mean(INDUSTRY_PROFILE.map((r) => r.gradRate)).toFixed(1)}%`, label: "평균 대졸 이상 비율" },
       { value: `${mean(INDUSTRY_PROFILE.map((r) => r.prepMonths)).toFixed(1)}개월`, label: "평균 준비기간" },
-      { value: `${mean(INDUSTRY_PROFILE.map((r) => r.employedRate)).toFixed(1)}%`, label: "평균 취업 경험 비율" },
+      { value: `${mean(INDUSTRY_PROFILE.map((r) => r.employedRate)).toFixed(1)}%`, label: "평균 창업 전 취업 비율" },
     ],
   },
 ];

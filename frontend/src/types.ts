@@ -19,6 +19,10 @@ export interface Notice {
   stage: string;
   /** biz_enyy 토큰 목록(창업기간) — myStage 기반 맞춤 매칭용. */
   careerPeriods: string[];
+  /** biz_trgt_age에 "만 40세 이상"이 없는(=39세 이하로 국한된) 공고. 청년창업 필터용. */
+  youthTargeted: boolean;
+  /** KISED 원본엔 없는 필드 — 제목+내용 키워드로 백엔드가 부가 태깅한 업종(복수 가능). */
+  industries: string[];
   recommended?: boolean;
 }
 

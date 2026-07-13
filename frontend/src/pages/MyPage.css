@@ -234,6 +234,11 @@
   display: flex;
   align-items: center;
   gap: 14px;
+  text-decoration: none;
+  color: inherit;
+}
+.my-bookmark-row:hover {
+  border-color: #d4dae2;
 }
 .my-bookmark-body {
   flex: 1;

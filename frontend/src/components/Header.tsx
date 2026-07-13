@@ -8,10 +8,10 @@ import "./Header.css";
 const NAV = [
   { to: "/", label: "홈" },
   { to: "/notices", label: "지원공고" },
-  { to: "/education", label: "창업교육" },
   { to: "/chat", label: "챗봇" },
   { to: "/test", label: "유형검사" },
   { to: "/dashboard", label: "창업 현황" },
+  { to: "/education", label: "창업교육" },
 ];
 
 export function Header() {

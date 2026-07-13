@@ -1,0 +1,19 @@
+.profile-nudge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--sub-2);
+  margin-top: 8px;
+}
+.profile-nudge-cta {
+  background: none;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary);
+  padding: 0;
+}
+.profile-nudge-cta:hover {
+  text-decoration: underline;
+}

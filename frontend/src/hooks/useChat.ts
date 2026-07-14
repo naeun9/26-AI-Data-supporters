@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { recommend } from "../api/client";
+import { askChatbot } from "../api/chatbot";
 import type { ChatMessage } from "../types";
 
 let idCounter = 0;
@@ -17,34 +17,26 @@ export function useChat(seed: ChatMessage[] = []) {
     const trimmed = text.trim();
     if (!trimmed || sending) return;
 
-    setMessages((prev) => [...prev, { id: nextId(), role: "user", text: trimmed }]);
+    const userMessage: ChatMessage = { id: nextId(), role: "user", text: trimmed };
+    // askChatbot에 넘길 이력은 방금 보낸 메시지까지 포함해야 해서 setState와 별도로 구성
+    const history = [...messages, userMessage];
+    setMessages(history);
     setInput("");
     setSending(true);
 
     try {
-      const result = await recommend({ query: trimmed, limit: 3 });
-      if (result.notices.length > 0) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: nextId(),
-            role: "bot",
-            text: "조건에 맞는 지원사업을 찾아봤어요.",
-            recommendation: {
-              notices: result.notices,
-              reason:
-                result.reasonKeywords.length > 0
-                  ? `${result.reasonKeywords.join(", ")} 키워드 매칭`
-                  : "마감이 임박한 순으로 추천",
-            },
-          },
-        ]);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          { id: nextId(), role: "bot", text: "조건에 딱 맞는 공고를 못 찾았어요. 다른 키워드로 다시 물어봐 주실래요?" },
-        ]);
-      }
+      const result = await askChatbot(history);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: nextId(),
+          role: "bot",
+          text: result.reply || "조건에 맞는 지원사업을 찾아봤어요.",
+          ...(result.notices.length > 0 && {
+            recommendation: { notices: result.notices, reason: result.reason },
+          }),
+        },
+      ]);
     } catch {
       setMessages((prev) => [
         ...prev,

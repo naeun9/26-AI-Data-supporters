@@ -9,6 +9,12 @@ load_dotenv()
 #   Encoding 키를 넣으면 이중 인코딩되어 에러코드 30(SERVICE_KEY_IS_NOT_REGISTERED) 발생함.
 KISED_SERVICE_KEY: str = os.getenv("KISED_SERVICE_KEY", "")
 
+# AI 챗봇용 Claude API 키 (없으면 챗봇이 키워드 매칭 폴백으로 동작)
+ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
+
+# JWT 서명 키 — 배포 시 반드시 .env에서 무작위 문자열로 교체할 것
+JWT_SECRET: str = os.getenv("JWT_SECRET", "dev-secret-change-me")
+
 BASE_URL = "https://apis.data.go.kr/B552735"
 
 # 서비스(도메인)별 엔드포인트 3종

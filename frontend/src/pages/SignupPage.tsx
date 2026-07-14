@@ -9,23 +9,33 @@ import "./AuthPages.css";
 
 export function SignupPage() {
   const navigate = useNavigate();
-  const { signup } = useAppState();
+  const { signup, signupWithEmail } = useAppState();
   const [agreed, setAgreed] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [nickname, setNickname] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  function finishSignup(name: string) {
-    signup(name || "홍길동");
+  // 소셜 가입은 아직 목업 (OAuth 연동 전)
+  function handleSocialSignup() {
+    signup("홍길동");
     navigate("/test");
   }
 
-  function handleSocialSignup() {
-    finishSignup("홍길동");
-  }
-
-  function handleEmailSignup(e: FormEvent) {
+  async function handleEmailSignup(e: FormEvent) {
     e.preventDefault();
-    if (!agreed) return;
-    finishSignup(nickname);
+    if (!agreed || submitting) return;
+    setError(null);
+    setSubmitting(true);
+    try {
+      await signupWithEmail(email, password, nickname);
+      navigate("/test");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "회원가입에 실패했어요.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -46,11 +56,26 @@ export function SignupPage() {
         <form className="auth-form" onSubmit={handleEmailSignup}>
           <label className="field">
             <span className="field-label">이메일</span>
-            <input className="field-input" placeholder="가입할 이메일을 입력해 주세요." />
+            <input
+              className="field-input"
+              type="email"
+              placeholder="가입할 이메일을 입력해 주세요."
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           </label>
           <label className="field">
             <span className="field-label">비밀번호</span>
-            <input className="field-input" type="password" placeholder="8자 이상 입력해 주세요." />
+            <input
+              className="field-input"
+              type="password"
+              placeholder="8자 이상 입력해 주세요."
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              minLength={8}
+              required
+            />
           </label>
           <label className="field">
             <span className="field-label">닉네임</span>
@@ -59,6 +84,7 @@ export function SignupPage() {
               placeholder="사용하실 이름을 입력해 주세요."
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
+              required
             />
           </label>
 
@@ -69,12 +95,16 @@ export function SignupPage() {
             <span>[필수] 이용약관 및 개인정보 처리방침 동의</span>
           </button>
 
+          {error && (
+            <p style={{ color: "#c33a3f", fontSize: 13, margin: "4px 0 0" }}>{error}</p>
+          )}
+
           <button
             type="submit"
-            disabled={!agreed}
-            className={`btn auth-submit${agreed ? " btn-dark" : " disabled"}`}
+            disabled={!agreed || submitting}
+            className={`btn auth-submit${agreed && !submitting ? " btn-dark" : " disabled"}`}
           >
-            가입하기
+            {submitting ? "가입 중..." : "가입하기"}
           </button>
         </form>
       </main>

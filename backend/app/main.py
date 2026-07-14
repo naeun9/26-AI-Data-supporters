@@ -12,19 +12,24 @@ import httpx
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 
-from . import config, fields
+from . import auth, chat, config, db, fields
 from .industries import tag_industries
 from .kised_client import KisedClient, extract_items
 
-app = FastAPI(title="KISED 공공데이터 프록시", version="0.2.0")
+app = FastAPI(title="KISED 공공데이터 프록시", version="0.3.0")
 
-# Vite dev 서버에서 바로 호출 가능하도록 CORS 허용
+# Vite dev 서버에서 바로 호출 가능하도록 CORS 허용 (auth/chat은 POST 사용)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+
+# 회원가입/로그인 + AI 챗봇 라우터 (KISED 프록시 로직과 독립)
+db.init_db()
+app.include_router(auth.router)
+app.include_router(chat.router)
 
 client = KisedClient()
 

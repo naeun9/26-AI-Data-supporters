@@ -1,10 +1,14 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { loginApi, signupApi } from "../api/auth";
 import type { ChatMessage, Conversation, TypeKey } from "../types";
 
 interface Profile {
   loggedIn: boolean;
   nickname: string;
+  /** 백엔드 로그인 시 발급되는 JWT. 소셜(목업) 로그인은 null. */
+  authToken: string | null;
+  email: string | null;
   myType: TypeKey | null;
   testedAt: string | null;
   /** 창업기간(biz_enyy) 토큰 하나 — 예비창업자/1년미만/.../10년미만 중 하나, 미설정 시 null. */
@@ -21,6 +25,8 @@ const STORAGE_KEY = "changupmate.profile";
 const EMPTY_PROFILE: Profile = {
   loggedIn: false,
   nickname: "",
+  authToken: null,
+  email: null,
   myType: null,
   testedAt: null,
   myStage: null,
@@ -69,6 +75,10 @@ interface AppStateValue extends Profile {
   login: (nickname?: string) => void;
   logout: () => void;
   signup: (nickname: string) => void;
+  /** 백엔드 이메일 로그인 — 실패 시 한국어 메시지가 담긴 Error를 던진다. */
+  loginWithEmail: (email: string, password: string) => Promise<void>;
+  /** 백엔드 이메일 회원가입 — 실패 시 한국어 메시지가 담긴 Error를 던진다. */
+  signupWithEmail: (email: string, password: string, nickname: string) => Promise<void>;
   completeTest: (type: TypeKey) => void;
   resetTest: () => void;
   setMyStage: (stage: string | null) => void;
@@ -121,9 +131,29 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
                 activeConversationId: SEED_CONVERSATION.id,
               },
         ),
-      logout: () => setProfile((p) => ({ ...p, loggedIn: false })),
+      logout: () => setProfile((p) => ({ ...p, loggedIn: false, authToken: null })),
       signup: (nickname: string) =>
         setProfile((p) => ({ ...p, loggedIn: true, nickname })),
+      loginWithEmail: async (email: string, password: string) => {
+        const { token, user } = await loginApi(email, password);
+        setProfile((p) => ({
+          ...p,
+          loggedIn: true,
+          nickname: user.nickname,
+          authToken: token,
+          email: user.email,
+        }));
+      },
+      signupWithEmail: async (email: string, password: string, nickname: string) => {
+        const { token, user } = await signupApi(email, password, nickname);
+        setProfile((p) => ({
+          ...p,
+          loggedIn: true,
+          nickname: user.nickname,
+          authToken: token,
+          email: user.email,
+        }));
+      },
       completeTest: (type: TypeKey) =>
         setProfile((p) => ({ ...p, myType: type, testedAt: new Date().toISOString() })),
       resetTest: () => setProfile((p) => ({ ...p, myType: null, testedAt: null })),

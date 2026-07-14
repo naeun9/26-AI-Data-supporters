@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { MiniHeader } from "../components/MiniHeader";
@@ -8,13 +9,33 @@ import "./AuthPages.css";
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAppState();
+  const { login, loginWithEmail } = useAppState();
   const from = (location.state as { from?: string } | null)?.from;
 
-  function handleLogin(e?: FormEvent) {
-    e?.preventDefault();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  // 소셜 로그인은 아직 목업 (OAuth 연동 전)
+  function handleSocialLogin() {
     login();
     navigate(from ?? "/");
+  }
+
+  async function handleEmailLogin(e: FormEvent) {
+    e.preventDefault();
+    if (submitting) return;
+    setError(null);
+    setSubmitting(true);
+    try {
+      await loginWithEmail(email, password);
+      navigate(from ?? "/");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "로그인에 실패했어요.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -26,23 +47,40 @@ export function LoginPage() {
         </div>
 
         <div className="auth-social-group">
-          <SocialButton provider="kakao" label="카카오로 시작하기" onClick={() => handleLogin()} />
-          <SocialButton provider="google" label="Google로 시작하기" onClick={() => handleLogin()} />
+          <SocialButton provider="kakao" label="카카오로 시작하기" onClick={handleSocialLogin} />
+          <SocialButton provider="google" label="Google로 시작하기" onClick={handleSocialLogin} />
         </div>
 
         <div className="auth-divider">또는 이메일로</div>
 
-        <form className="auth-form" onSubmit={handleLogin}>
+        <form className="auth-form" onSubmit={handleEmailLogin}>
           <label className="field">
             <span className="field-label">이메일</span>
-            <input className="field-input" placeholder="이메일을 입력해주세요." />
+            <input
+              className="field-input"
+              type="email"
+              placeholder="이메일을 입력해주세요."
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           </label>
           <label className="field">
             <span className="field-label">비밀번호</span>
-            <input className="field-input" type="password" placeholder="비밀번호를 입력해주세요." />
+            <input
+              className="field-input"
+              type="password"
+              placeholder="비밀번호를 입력해주세요."
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
           </label>
-          <button type="submit" className="btn btn-dark auth-submit">
-            로그인
+          {error && (
+            <p style={{ color: "#c33a3f", fontSize: 13, margin: "4px 0 0" }}>{error}</p>
+          )}
+          <button type="submit" className="btn btn-dark auth-submit" disabled={submitting}>
+            {submitting ? "로그인 중..." : "로그인"}
           </button>
         </form>
 

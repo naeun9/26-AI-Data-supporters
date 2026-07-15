@@ -3,11 +3,17 @@
 팀플 규모에서는 별도 DB 서버 없이 파일 하나로 충분해서 표준 라이브러리 sqlite3 사용.
 DB 파일은 backend/users.db (gitignore 대상).
 """
+import os
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 
-DB_PATH = Path(__file__).resolve().parent.parent / "users.db"
+# Vercel 등 서버리스 환경은 코드 디렉터리가 읽기 전용이라 /tmp에 저장
+# (인스턴스가 재활용될 때 초기화됨 — 데모용. 영구 저장이 필요하면 외부 DB로 교체)
+if os.environ.get("VERCEL"):
+    DB_PATH = Path("/tmp/users.db")
+else:
+    DB_PATH = Path(__file__).resolve().parent.parent / "users.db"
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (

@@ -1,7 +1,6 @@
 import type { ChatMessage, Notice } from "../types";
+import { API_BASE as BASE } from "./base";
 import { fetchAnnouncements } from "./kised";
-
-const BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
 
 interface ChatApiResponse {
   reply: string;

@@ -2,7 +2,7 @@ import { toAbsoluteHref } from "../utils/url";
 import { STARTUP_TYPES_BY_KEY } from "../data/startupTypes";
 import type { TypeKey } from "../types";
 
-const BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
+import { API_BASE as BASE } from "./base";
 
 interface RawEducation {
   lctr_nm: string;

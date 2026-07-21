@@ -78,7 +78,7 @@ export function ResultPage() {
               </div>
             ))}
           </div>
-          <div className="result-data-footnote">* {type.industryGroup} · 업종 프로파일에서 매핑된 근거 지표입니다</div>
+          <div className="result-data-footnote">* {type.industryGroup} 기준 지표입니다</div>
         </div>
 
         <div className="result-3col">

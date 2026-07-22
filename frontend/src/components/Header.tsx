@@ -3,6 +3,7 @@ import { LogOut, Menu, X } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAppState } from "../state/AppState";
 import { TypeIcon } from "../icons/TypeIcon";
+import kisedLogo from "../assets/kised-logo.png";
 import "./Header.css";
 
 const NAV = [
@@ -30,6 +31,8 @@ export function Header() {
     <header className="site-header">
       <div className="container site-header-inner">
         <div className="site-header-brand">
+          <img src={kisedLogo} alt="창업진흥원" className="kised-logo" />
+          <span className="brand-divider" aria-hidden="true" />
           <NavLink to="/" className="brand-link">
             <span className="brand-mark">K</span>
             <span className="brand-name">창업메이트</span>

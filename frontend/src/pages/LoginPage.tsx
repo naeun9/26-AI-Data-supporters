@@ -9,7 +9,7 @@ import "./AuthPages.css";
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, loginWithEmail, loginWithGoogle } = useAppState();
+  const { loginWithEmail, loginWithGoogle } = useAppState();
   const from = (location.state as { from?: string } | null)?.from;
 
   const [email, setEmail] = useState("");
@@ -17,12 +17,6 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [socialError, setSocialError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  // 카카오는 아직 목업 (OAuth 연동 전)
-  function handleKakaoLogin() {
-    login();
-    navigate(from ?? "/");
-  }
 
   async function handleGoogleLogin() {
     if (submitting) return;
@@ -62,7 +56,6 @@ export function LoginPage() {
         </div>
 
         <div className="auth-social-group">
-          <SocialButton provider="kakao" label="카카오로 시작하기" onClick={handleKakaoLogin} />
           <SocialButton provider="google" label="Google로 시작하기" onClick={handleGoogleLogin} />
         </div>
         {socialError && (

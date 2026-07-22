@@ -54,28 +54,10 @@ function nextConversationId() {
   return `conv-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
-/** (임시) 로그인 시 대화 기록이 하나도 없으면 채워주는 예시 1건 — 마이페이지/챗봇 탭이 같은 데이터를 보게 함. */
-const SEED_CONVERSATION: Conversation = {
-  id: "seed-conv-1",
-  title: "AI 의료 번역 서비스 준비 중이에요",
-  sub: "대화 중",
-  messages: [
-    { id: "seed-conv-1-m1", role: "bot", text: "어떤 창업을 준비하고 계세요? 편하게 말씀해 주세요." },
-    { id: "seed-conv-1-m2", role: "user", text: "AI 의료 번역 서비스를 준비 중이에요. 아직 예비창업자예요." },
-    {
-      id: "seed-conv-1-m3",
-      role: "bot",
-      text: "좋아요! 예비창업자 대상 지원사업 위주로 살펴보시면 좋을 것 같아요. 지원공고 탭에서 '예비창업자' 필터로 확인해보세요.",
-    },
-  ],
-};
-
 interface AppStateValue extends Profile {
   tested: boolean;
   unlocked: boolean;
-  login: (nickname?: string) => void;
   logout: () => void;
-  signup: (nickname: string) => void;
   /** 백엔드 이메일 로그인 — 실패 시 한국어 메시지가 담긴 Error를 던진다. */
   loginWithEmail: (email: string, password: string) => Promise<void>;
   /** 백엔드 이메일 회원가입 — 실패 시 한국어 메시지가 담긴 Error를 던진다. */
@@ -122,21 +104,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       ...profile,
       tested: profile.myType !== null,
       unlocked: profile.loggedIn && profile.myType !== null,
-      login: (nickname = "홍길동") =>
-        setProfile((p) =>
-          p.conversations.length > 0
-            ? { ...p, loggedIn: true, nickname }
-            : {
-                ...p,
-                loggedIn: true,
-                nickname,
-                conversations: [SEED_CONVERSATION],
-                activeConversationId: SEED_CONVERSATION.id,
-              },
-        ),
       logout: () => setProfile((p) => ({ ...p, loggedIn: false, authToken: null })),
-      signup: (nickname: string) =>
-        setProfile((p) => ({ ...p, loggedIn: true, nickname })),
       loginWithEmail: async (email: string, password: string) => {
         const { token, user } = await loginApi(email, password);
         setProfile((p) => ({

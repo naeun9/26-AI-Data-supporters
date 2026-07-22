@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { loginApi, signupApi } from "../api/auth";
+import { fetchGoogleClientId, googleLoginApi, loginApi, signupApi } from "../api/auth";
+import { getGoogleAccessToken } from "../api/google";
 import type { ChatMessage, Conversation, TypeKey } from "../types";
 
 interface Profile {
@@ -79,6 +80,8 @@ interface AppStateValue extends Profile {
   loginWithEmail: (email: string, password: string) => Promise<void>;
   /** 백엔드 이메일 회원가입 — 실패 시 한국어 메시지가 담긴 Error를 던진다. */
   signupWithEmail: (email: string, password: string, nickname: string) => Promise<void>;
+  /** 실제 구글 OAuth 로그인 (가입 겸용) — 실패/취소 시 한국어 Error를 던진다. */
+  loginWithGoogle: () => Promise<void>;
   completeTest: (type: TypeKey) => void;
   resetTest: () => void;
   setMyStage: (stage: string | null) => void;
@@ -146,6 +149,21 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       },
       signupWithEmail: async (email: string, password: string, nickname: string) => {
         const { token, user } = await signupApi(email, password, nickname);
+        setProfile((p) => ({
+          ...p,
+          loggedIn: true,
+          nickname: user.nickname,
+          authToken: token,
+          email: user.email,
+        }));
+      },
+      loginWithGoogle: async () => {
+        const clientId = await fetchGoogleClientId();
+        if (!clientId) {
+          throw new Error("구글 로그인이 아직 설정되지 않았어요. (서버에 GOOGLE_CLIENT_ID 필요)");
+        }
+        const accessToken = await getGoogleAccessToken(clientId);
+        const { token, user } = await googleLoginApi(accessToken);
         setProfile((p) => ({
           ...p,
           loggedIn: true,

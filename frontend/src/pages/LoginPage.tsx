@@ -9,18 +9,33 @@ import "./AuthPages.css";
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, loginWithEmail } = useAppState();
+  const { login, loginWithEmail, loginWithGoogle } = useAppState();
   const from = (location.state as { from?: string } | null)?.from;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [socialError, setSocialError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // 소셜 로그인은 아직 목업 (OAuth 연동 전)
-  function handleSocialLogin() {
+  // 카카오는 아직 목업 (OAuth 연동 전)
+  function handleKakaoLogin() {
     login();
     navigate(from ?? "/");
+  }
+
+  async function handleGoogleLogin() {
+    if (submitting) return;
+    setSocialError(null);
+    setSubmitting(true);
+    try {
+      await loginWithGoogle();
+      navigate(from ?? "/");
+    } catch (err) {
+      setSocialError(err instanceof Error ? err.message : "구글 로그인에 실패했어요.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function handleEmailLogin(e: FormEvent) {
@@ -47,9 +62,12 @@ export function LoginPage() {
         </div>
 
         <div className="auth-social-group">
-          <SocialButton provider="kakao" label="카카오로 시작하기" onClick={handleSocialLogin} />
-          <SocialButton provider="google" label="Google로 시작하기" onClick={handleSocialLogin} />
+          <SocialButton provider="kakao" label="카카오로 시작하기" onClick={handleKakaoLogin} />
+          <SocialButton provider="google" label="Google로 시작하기" onClick={handleGoogleLogin} />
         </div>
+        {socialError && (
+          <p style={{ color: "#c33a3f", fontSize: 13, margin: "8px 0 0", textAlign: "center" }}>{socialError}</p>
+        )}
 
         <div className="auth-divider">또는 이메일로</div>
 

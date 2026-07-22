@@ -37,3 +37,21 @@ export async function loginApi(email: string, password: string): Promise<AuthRes
   });
   return parseOrThrow(res);
 }
+
+/** 서버에 설정된 구글 OAuth 클라이언트 ID. 미설정이면 빈 문자열. */
+export async function fetchGoogleClientId(): Promise<string> {
+  const res = await fetch(`${BASE}/api/auth/google/config`);
+  if (!res.ok) return "";
+  const data = (await res.json().catch(() => null)) as { client_id?: string } | null;
+  return data?.client_id ?? "";
+}
+
+/** 구글 액세스 토큰을 우리 서비스 JWT로 교환한다. */
+export async function googleLoginApi(accessToken: string): Promise<AuthResult> {
+  const res = await fetch(`${BASE}/api/auth/google`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ access_token: accessToken }),
+  });
+  return parseOrThrow(res);
+}

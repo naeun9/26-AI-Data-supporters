@@ -9,18 +9,33 @@ import "./AuthPages.css";
 
 export function SignupPage() {
   const navigate = useNavigate();
-  const { signup, signupWithEmail } = useAppState();
+  const { signup, signupWithEmail, loginWithGoogle } = useAppState();
   const [agreed, setAgreed] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nickname, setNickname] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [socialError, setSocialError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // 소셜 가입은 아직 목업 (OAuth 연동 전)
-  function handleSocialSignup() {
+  // 카카오는 아직 목업 (OAuth 연동 전)
+  function handleKakaoSignup() {
     signup("홍길동");
     navigate("/test");
+  }
+
+  async function handleGoogleSignup() {
+    if (submitting) return;
+    setSocialError(null);
+    setSubmitting(true);
+    try {
+      await loginWithGoogle();
+      navigate("/test");
+    } catch (err) {
+      setSocialError(err instanceof Error ? err.message : "구글 가입에 실패했어요.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function handleEmailSignup(e: FormEvent) {
@@ -47,9 +62,12 @@ export function SignupPage() {
         </div>
 
         <div className="auth-social-group">
-          <SocialButton provider="kakao" label="카카오로 가입" onClick={handleSocialSignup} />
-          <SocialButton provider="google" label="Google로 가입" onClick={handleSocialSignup} />
+          <SocialButton provider="kakao" label="카카오로 가입" onClick={handleKakaoSignup} />
+          <SocialButton provider="google" label="Google로 가입" onClick={handleGoogleSignup} />
         </div>
+        {socialError && (
+          <p style={{ color: "#c33a3f", fontSize: 13, margin: "8px 0 0", textAlign: "center" }}>{socialError}</p>
+        )}
 
         <div className="auth-divider">이메일로 가입</div>
 

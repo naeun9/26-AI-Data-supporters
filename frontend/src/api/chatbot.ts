@@ -30,12 +30,21 @@ export async function askChatbot(history: ChatMessage[]): Promise<BotReply> {
   if (!res.ok) throw new Error(`chat api failed: ${res.status}`);
   const data = (await res.json()) as ChatApiResponse;
 
-  const all = await fetchAnnouncements();
-  const byId = new Map(all.map((n) => [n.id, n]));
-  const notices = data.notice_sns
-    .map((sn) => byId.get(String(sn)))
-    .filter((n): n is Notice => Boolean(n))
-    .map((n) => ({ ...n, recommended: true }));
+  // 추천 공고 번호 → Notice 매핑. 공고 API가 죽어 있어도(예: 서비스키 미설정)
+  // 챗봇 답변 자체는 보여줘야 하므로 실패는 빈 추천으로 처리한다.
+  let notices: Notice[] = [];
+  if (data.notice_sns.length > 0) {
+    try {
+      const all = await fetchAnnouncements();
+      const byId = new Map(all.map((n) => [n.id, n]));
+      notices = data.notice_sns
+        .map((sn) => byId.get(String(sn)))
+        .filter((n): n is Notice => Boolean(n))
+        .map((n) => ({ ...n, recommended: true }));
+    } catch {
+      notices = [];
+    }
+  }
 
   const reason =
     data.source === "claude"

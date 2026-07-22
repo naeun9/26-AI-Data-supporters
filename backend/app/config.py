@@ -15,6 +15,10 @@ ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
 # JWT 서명 키 — 배포 시 반드시 .env에서 무작위 문자열로 교체할 것
 JWT_SECRET: str = os.getenv("JWT_SECRET", "dev-secret-change-me")
 
+# 구글 OAuth 클라이언트 ID (Google Cloud Console → 사용자 인증 정보에서 발급)
+# 비어 있으면 프론트의 구글 로그인 버튼이 "설정 필요" 안내를 띄운다.
+GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
+
 BASE_URL = "https://apis.data.go.kr/B552735"
 
 # 서비스(도메인)별 엔드포인트 3종

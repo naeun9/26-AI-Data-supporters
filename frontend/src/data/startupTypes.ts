@@ -34,9 +34,9 @@ export const STARTUP_TYPES: StartupTypeWithKeywords[] = [
     industryGroup: "교육 서비스업",
     keywords: ["콘텐츠", "아이디어", "교육", "서비스기획", "여성"],
     data: [
-      { value: `${industryRow("교육 서비스업").femaleRate.toFixed(1)}%`, label: "여성 창업자 비율" },
       { value: `${industryRow("교육 서비스업").gradRate.toFixed(1)}%`, label: "대졸 이상 비율" },
       { value: `${industryRow("교육 서비스업").prepMonths.toFixed(1)}개월`, label: "평균 준비기간" },
+      { value: `${industryRow("교육 서비스업").employedRate.toFixed(1)}%`, label: "창업 전 취업 비율" },
     ],
   },
   {
@@ -50,11 +50,11 @@ export const STARTUP_TYPES: StartupTypeWithKeywords[] = [
     industryGroup: "숙박 및 음식점업",
     keywords: ["생계형", "소상공인", "외식", "도소매", "로컬", "자영업"],
     data: [
-      { value: `${industryRow("숙박 및 음식점업").femaleRate.toFixed(1)}%`, label: "여성 창업자 비율" },
       { value: `${industryRow("숙박 및 음식점업").gradRate.toFixed(1)}%`, label: "대졸 이상 비율" },
       { value: `${industryRow("숙박 및 음식점업").prepMonths.toFixed(1)}개월`, label: "평균 준비기간" },
+      { value: `${industryRow("숙박 및 음식점업").employedRate.toFixed(1)}%`, label: "창업 전 취업 비율" },
     ],
-  },  
+  },
   {
     key: "career",
     name: "경력전환형",

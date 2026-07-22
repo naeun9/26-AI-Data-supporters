@@ -67,7 +67,7 @@ export function ResultPage() {
         <div className="result-data-card">
           <div className="result-data-head">
             <BarChart3 size={17} color="var(--primary)" />
-            <span className="result-data-title">데이터로 본 이 유형</span>
+            <span className="result-data-title">이 유형과 가까운 업종은?</span>
             <span className="result-data-sub">· 창업진흥원 통계</span>
           </div>
           <div className="result-data-grid">
@@ -78,7 +78,9 @@ export function ResultPage() {
               </div>
             ))}
           </div>
-          <div className="result-data-footnote">* {type.industryGroup} · 업종 프로파일에서 매핑된 근거 지표입니다</div>
+          <div className="result-data-footnote">
+            * 이 유형과 연관성이 높은 <b>{type.industryGroup}</b>의 창업 통계입니다 (참고용)
+          </div>
         </div>
 
         <div className="result-3col">

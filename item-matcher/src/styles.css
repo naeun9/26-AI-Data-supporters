@@ -422,16 +422,23 @@ button {
 }
 
 /* 부위별 부드러운 트랜지션 */
-.buddy .brow,
+.buddy .antenna,
+.buddy .antenna-tip,
 .buddy .eyes,
 .buddy .mouth,
-.buddy .pencil,
+.buddy .cheeks,
 .buddy .spark {
   transform-box: fill-box;
   transform-origin: center;
   transition:
     transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1),
-    opacity 0.3s ease;
+    opacity 0.3s ease,
+    fill 0.3s ease,
+    stroke 0.3s ease;
+}
+
+.buddy .antenna {
+  transform-origin: bottom center;
 }
 
 /* 입: 기본 전부 숨김 → mood별 표시 */
@@ -446,29 +453,39 @@ button {
   opacity: 1;
 }
 
-/* 궁리: 시선 위로, 한쪽 눈썹만 치켜올림, 연필 등장 */
-.buddy .pencil,
 .buddy .spark {
   opacity: 0;
 }
 
+/* 궁리: 시선 위로, 안테나 갸웃 + 잔깜빡임 */
 .mood-thinking .eyes {
   transform: translate(-1.5px, -3px);
 }
 
-.mood-thinking .brow-r {
-  transform: translateY(-3px) rotate(-6deg);
+.mood-thinking .antenna {
+  transform: rotate(-14deg);
 }
 
-.mood-thinking .pencil {
-  opacity: 1;
-  transform: rotate(-4deg);
+.mood-thinking .antenna-tip {
+  animation: tipblink 0.9s ease-in-out infinite;
 }
 
-/* 깨달음: 눈썹 활짝, 스파크 반짝 */
-.mood-eureka .brow-l,
-.mood-eureka .brow-r {
-  transform: translateY(-3.5px);
+/* 깨달음: 안테나 점등(초록), 볼터치, 스파크 */
+.mood-eureka .antenna {
+  transform: rotate(0deg) translateY(-1.5px);
+}
+
+.mood-eureka .antenna-tip {
+  fill: var(--green-dot);
+  stroke: var(--green-dot);
+}
+
+.mood-eureka .cheeks {
+  opacity: 0.75;
+}
+
+.mood-eureka .eyes {
+  transform: translateY(-1px);
 }
 
 .mood-eureka .spark {
@@ -476,22 +493,13 @@ button {
   animation: sparkle 0.9s ease;
 }
 
-.mood-eureka .buddy,
-.mood-eureka svg {
-  animation-duration: 2.6s;
-}
-
-/* 갸웃: 눈썹 안쪽으로 찌푸림, 시선 아래 */
-.mood-puzzled .brow-l {
-  transform: translateY(-1px) rotate(8deg);
-}
-
-.mood-puzzled .brow-r {
-  transform: translateY(-1px) rotate(-8deg);
-}
-
+/* 갸웃: 시선 아래, 안테나 축 처짐 */
 .mood-puzzled .eyes {
-  transform: translateY(1.5px);
+  transform: translateY(2px);
+}
+
+.mood-puzzled .antenna {
+  transform: rotate(22deg) translateY(1px);
 }
 
 /* 눈 깜빡임 */
@@ -575,6 +583,16 @@ button {
   100% {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes tipblink {
+  0%,
+  100% {
+    fill: #fff;
+  }
+  50% {
+    fill: #fbbf24;
   }
 }
 

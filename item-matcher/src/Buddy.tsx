@@ -7,65 +7,45 @@ export function Buddy({ mood }: { mood: Mood }) {
   return (
     <div className={`buddy mood-${mood}`}>
       <svg width="76" height="76" viewBox="0 0 76 76" aria-hidden="true">
-        {/* 얼굴 */}
-        <circle cx="38" cy="38" r="31" fill="#fff" stroke="#d4d4d8" strokeWidth="2" />
-
         {/* 깨달음 스파크 (eureka에서만) */}
         <g className="spark" stroke="#f59e0b" strokeWidth="2.4" strokeLinecap="round">
-          <path d="M58 12 l3 -5" />
-          <path d="M64 18 l5 -3" />
-          <path d="M63 26 l6 1" />
+          <path d="M60 14 l3 -5" />
+          <path d="M66 20 l5 -3" />
+          <path d="M65 28 l6 1" />
         </g>
 
-        {/* 연필 (thinking에서 귀에 꽂힘) */}
-        <g className="pencil">
-          <rect x="60" y="26" width="5" height="16" rx="1.4" fill="#ef4444" transform="rotate(28 62 34)" />
-          <path d="M66.5 44.5 l2.6 4.6 l-5.1 0.5 Z" fill="#fbbf24" transform="rotate(28 66 46)" />
+        {/* 안테나 — thinking이면 갸웃 기울고, eureka면 끝이 초록으로 점등 */}
+        <g className="antenna">
+          <path d="M38 18 V 9" stroke="#a1a1aa" strokeWidth="2.4" strokeLinecap="round" />
+          <circle className="antenna-tip" cx="38" cy="6.5" r="3.4" fill="#fff" stroke="#a1a1aa" strokeWidth="2" />
         </g>
 
-        {/* 눈썹 */}
-        <path
-          className="brow brow-l"
-          d="M23 29 q5 -6 11 -2"
-          stroke="#18181b"
-          strokeWidth="2.4"
-          fill="none"
-          strokeLinecap="round"
-        />
-        <path
-          className="brow brow-r"
-          d="M43 27 q5 -4 10 0"
-          stroke="#18181b"
-          strokeWidth="2.4"
-          fill="none"
-          strokeLinecap="round"
-        />
+        {/* 둥근 사각 얼굴 + 양옆 귀 */}
+        <rect x="9" y="30" width="5" height="12" rx="2.5" fill="#e4e4e7" />
+        <rect x="62" y="30" width="5" height="12" rx="2.5" fill="#e4e4e7" />
+        <rect x="12" y="18" width="52" height="48" rx="17" fill="#fff" stroke="#d4d4d8" strokeWidth="2" />
 
         {/* 눈 (blink는 안쪽 g에서, 시선 이동은 바깥 g에서) */}
         <g className="eyes">
           <g className="blink">
-            <circle cx="29" cy="36" r="2.1" fill="#18181b" />
-            <circle cx="48" cy="35" r="2.1" fill="#18181b" />
+            <circle cx="28" cy="38" r="2.6" fill="#18181b" />
+            <circle cx="48" cy="38" r="2.6" fill="#18181b" />
           </g>
         </g>
 
-        {/* 노션풍 꺾인 코 */}
-        <path
-          d="M39 34 l-5 13 h6"
-          stroke="#18181b"
-          strokeWidth="2.4"
-          fill="none"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
+        {/* 볼터치 — eureka에서만 발그레 */}
+        <g className="cheeks" fill="#fda4af" opacity="0">
+          <circle cx="23" cy="47" r="3" />
+          <circle cx="53" cy="47" r="3" />
+        </g>
 
         {/* 입 — mood별로 크로스페이드 */}
-        <path className="mouth m-idle" d="M34 55 h8" stroke="#18181b" strokeWidth="2.2" strokeLinecap="round" fill="none" />
-        <circle className="mouth m-o" cx="38.5" cy="55" r="2.8" stroke="#18181b" strokeWidth="2" fill="none" />
-        <path className="mouth m-smile" d="M32 53.5 q6 6.5 13 -0.5" stroke="#18181b" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+        <path className="mouth m-idle" d="M34 52 h8" stroke="#18181b" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+        <circle className="mouth m-o" cx="38" cy="52.5" r="2.8" stroke="#18181b" strokeWidth="2" fill="none" />
+        <path className="mouth m-smile" d="M31.5 50.5 q6.5 7 13 0" stroke="#18181b" strokeWidth="2.2" strokeLinecap="round" fill="none" />
         <path
           className="mouth m-flat"
-          d="M33 55.5 q3 -2.5 6 0 q3 2.5 6 0"
+          d="M32 53 q3 -2.5 6 0 q3 2.5 6 0"
           stroke="#18181b"
           strokeWidth="2.2"
           strokeLinecap="round"

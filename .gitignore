@@ -142,3 +142,7 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
 .vercel
+
+# changupmate.com은 별도 저장소로 분리됨 (github.com/jaemin-jo/changupmate)
+item-matcher/
+mcp-server/

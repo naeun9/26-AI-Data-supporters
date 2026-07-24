@@ -88,6 +88,8 @@ button {
   border-radius: 8px;
   font-weight: 600;
   color: var(--ink);
+  white-space: nowrap;
+  flex: none;
 }
 
 .crumb:hover {
@@ -124,6 +126,8 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 7px;
+  white-space: nowrap;
+  flex: none;
   background: #18181b;
   color: #fff;
   border-radius: 999px;
@@ -190,6 +194,12 @@ button {
   padding: 0 24px;
   display: flex;
   gap: 24px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs-inner::-webkit-scrollbar {
+  display: none;
 }
 
 .tab {
@@ -198,6 +208,8 @@ button {
   font-weight: 500;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
+  white-space: nowrap;
+  flex: none;
 }
 
 .tab:hover {
@@ -422,23 +434,17 @@ button {
 }
 
 /* 부위별 부드러운 트랜지션 */
-.buddy .antenna,
-.buddy .antenna-tip,
+.buddy .brow,
 .buddy .eyes,
 .buddy .mouth,
 .buddy .cheeks,
+.buddy .pencil,
 .buddy .spark {
   transform-box: fill-box;
   transform-origin: center;
   transition:
     transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1),
-    opacity 0.3s ease,
-    fill 0.3s ease,
-    stroke 0.3s ease;
-}
-
-.buddy .antenna {
-  transform-origin: bottom center;
+    opacity 0.3s ease;
 }
 
 /* 입: 기본 전부 숨김 → mood별 표시 */
@@ -453,39 +459,37 @@ button {
   opacity: 1;
 }
 
-.buddy .spark {
+.buddy .spark,
+.buddy .pencil {
   opacity: 0;
 }
 
-/* 궁리: 시선 위로, 안테나 갸웃 + 잔깜빡임 */
+/* 궁리: 시선 위로, 한쪽 눈썹 치켜올림, 연필 등장 */
 .mood-thinking .eyes {
   transform: translate(-1.5px, -3px);
 }
 
-.mood-thinking .antenna {
-  transform: rotate(-14deg);
+.mood-thinking .brow-r {
+  transform: translateY(-2.5px) rotate(-7deg);
 }
 
-.mood-thinking .antenna-tip {
-  animation: tipblink 0.9s ease-in-out infinite;
+.mood-thinking .pencil {
+  opacity: 1;
+  transform: rotate(-5deg);
 }
 
-/* 깨달음: 안테나 점등(초록), 볼터치, 스파크 */
-.mood-eureka .antenna {
-  transform: rotate(0deg) translateY(-1.5px);
-}
-
-.mood-eureka .antenna-tip {
-  fill: var(--green-dot);
-  stroke: var(--green-dot);
-}
-
-.mood-eureka .cheeks {
-  opacity: 0.75;
+/* 깨달음: 눈썹 활짝, 볼터치, 스파크 */
+.mood-eureka .brow-l,
+.mood-eureka .brow-r {
+  transform: translateY(-3px);
 }
 
 .mood-eureka .eyes {
   transform: translateY(-1px);
+}
+
+.mood-eureka .cheeks {
+  opacity: 0.75;
 }
 
 .mood-eureka .spark {
@@ -493,13 +497,17 @@ button {
   animation: sparkle 0.9s ease;
 }
 
-/* 갸웃: 시선 아래, 안테나 축 처짐 */
-.mood-puzzled .eyes {
-  transform: translateY(2px);
+/* 갸웃: 눈썹 안쪽 찌푸림, 시선 아래 */
+.mood-puzzled .brow-l {
+  transform: rotate(9deg) translateY(-0.5px);
 }
 
-.mood-puzzled .antenna {
-  transform: rotate(22deg) translateY(1px);
+.mood-puzzled .brow-r {
+  transform: rotate(-9deg) translateY(-0.5px);
+}
+
+.mood-puzzled .eyes {
+  transform: translateY(1.8px);
 }
 
 /* 눈 깜빡임 */
@@ -586,16 +594,6 @@ button {
   }
 }
 
-@keyframes tipblink {
-  0%,
-  100% {
-    fill: #fff;
-  }
-  50% {
-    fill: #fbbf24;
-  }
-}
-
 @keyframes dotwave {
   0%,
   60%,
@@ -607,7 +605,11 @@ button {
   }
 }
 
-/* ── 입력 textarea ─────────────────────────────── */
+/* ── 입력 textarea (+ URL 하이라이트 미러) ─────────────────────────────── */
+.input-wrap {
+  position: relative;
+}
+
 .idea-input {
   width: 100%;
   border: none;
@@ -618,12 +620,40 @@ button {
   font: inherit;
   font-size: 14.5px;
   line-height: 1.65;
-  color: var(--ink);
+  color: transparent; /* 실제 글자는 미러 레이어가 그림 */
+  caret-color: var(--ink);
   background: transparent;
+  position: relative;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  display: block;
 }
 
 .idea-input::placeholder {
   color: var(--faint);
+}
+
+.input-mirror {
+  position: absolute;
+  inset: 0;
+  padding: 14px 16px;
+  font: inherit;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.url-hl {
+  color: var(--blue);
+  background: #dbeafe;
+  border-radius: 4px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 /* ── 키워드 칩 ─────────────────────────────── */
@@ -854,5 +884,98 @@ select.filter {
   }
   50% {
     opacity: 0.35;
+  }
+}
+
+/* ── 모바일 최적화 ─────────────────────────────── */
+@media (max-width: 640px) {
+  .topbar-inner {
+    padding: 0 12px;
+    gap: 4px;
+    height: 52px;
+  }
+
+  /* 좁은 화면에선 홈 크럼·라이브 필 숨김 (글자 세로깨짐 방지) */
+  .crumb-root,
+  .crumb-sep,
+  .live-pill {
+    display: none;
+  }
+
+  .crumb {
+    padding: 5px 6px;
+  }
+
+  .topbar-right .btn,
+  .btn {
+    padding: 7px 11px;
+    font-size: 12.5px;
+  }
+
+  .user-chip {
+    font-size: 13px;
+  }
+
+  .tabs-inner {
+    padding: 0 12px;
+    gap: 18px;
+  }
+
+  .page {
+    padding: 18px 12px 40px;
+  }
+
+  .page-head {
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .page-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+  }
+
+  .page-title {
+    font-size: 18px;
+  }
+
+  .page-title .sub {
+    display: none;
+  }
+
+  .page-actions {
+    gap: 6px;
+  }
+
+  .canvas {
+    padding: 13px;
+    gap: 15px;
+    border-radius: 13px;
+    background-size: 14px 14px;
+  }
+
+  .buddy svg {
+    width: 62px;
+    height: 62px;
+  }
+
+  .bubble {
+    font-size: 12.5px;
+    padding: 9px 12px;
+  }
+
+  .idea-input,
+  .input-mirror {
+    font-size: 14px;
+  }
+
+  .result-card {
+    padding: 12px 13px 11px;
+  }
+
+  .footer-inner {
+    flex-wrap: wrap;
+    gap: 8px;
   }
 }

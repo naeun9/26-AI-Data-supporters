@@ -69,9 +69,13 @@ const SYNONYMS: Record<string, string[]> = {
 /** 한국어 조사 꼬리 — "아이템을" → "아이템" 변형도 후보에 추가 */
 const PARTICLES = ["은", "는", "이", "가", "을", "를", "에", "의", "로", "와", "과", "도", "만", "요"];
 
-/** 사용자 입력에서 매칭용 키워드 추출 */
+/** 사용자 입력에서 매칭용 키워드 추출 (URL은 통째로 제외) */
 export function extractKeywords(text: string): string[] {
-  const raw = text.toLowerCase().match(/[가-힣a-z0-9&+]+/g) ?? [];
+  const raw =
+    text
+      .replace(/https?:\/\/\S+/gi, " ")
+      .toLowerCase()
+      .match(/[가-힣a-z0-9&+]+/g) ?? [];
   const out: string[] = [];
   const seen = new Set<string>();
 
@@ -115,9 +119,12 @@ function haystackOf(n: Announcement): Haystack {
   };
 }
 
-/** 키워드 하나가 이 공고에 맞는지 — 동의어까지 보고 가중치 반환 (0이면 불일치) */
+/** 키워드 하나가 이 공고에 맞는지 — 동의어·구(句) 분해까지 보고 가중치 반환 (0이면 불일치) */
 function keywordWeight(kw: string, hay: Haystack): number {
-  const variants = [kw, ...(SYNONYMS[kw] ?? [])];
+  const base = kw.toLowerCase();
+  const variants = [base, ...(SYNONYMS[base] ?? [])];
+  // "AI 반도체" 같은 구는 전체 → 단어별 순으로 시도
+  if (base.includes(" ")) variants.push(...base.split(/\s+/).filter((p) => p.length >= 2));
   let best = 0;
   for (const v of variants) {
     if (hay.title.includes(v)) best = Math.max(best, 3);
@@ -127,15 +134,13 @@ function keywordWeight(kw: string, hay: Haystack): number {
   return best;
 }
 
-/** 전 공고를 실시간 스코어링해 상위 매칭 반환 */
-export function matchAnnouncements(
-  text: string,
+/** 주어진 키워드 리스트로 전 공고를 스코어링 (LLM 키워드/로컬 키워드 공용) */
+export function matchWithKeywords(
+  keywords: string[],
   announcements: Announcement[],
   limit = 30,
-): { keywords: string[]; results: MatchResult[] } {
-  const keywords = extractKeywords(text);
-  if (keywords.length === 0) return { keywords, results: [] };
-
+): MatchResult[] {
+  if (keywords.length === 0) return [];
   const results: MatchResult[] = [];
   for (const n of announcements) {
     const hay = haystackOf(n);
@@ -155,7 +160,17 @@ export function matchAnnouncements(
     if (b.score !== a.score) return b.score - a.score;
     return (a.notice.pbanc_rcpt_end_dt ?? "9999") < (b.notice.pbanc_rcpt_end_dt ?? "9999") ? -1 : 1;
   });
-  return { keywords, results: results.slice(0, limit) };
+  return results.slice(0, limit);
+}
+
+/** 전 공고를 실시간 스코어링해 상위 매칭 반환 */
+export function matchAnnouncements(
+  text: string,
+  announcements: Announcement[],
+  limit = 30,
+): { keywords: string[]; results: MatchResult[] } {
+  const keywords = extractKeywords(text);
+  return { keywords, results: matchWithKeywords(keywords, announcements, limit) };
 }
 
 /** "20260812" → 마감까지 남은 일수 (지났으면 음수) */

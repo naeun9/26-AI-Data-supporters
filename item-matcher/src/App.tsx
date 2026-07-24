@@ -2,9 +2,26 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { API_BASE, fetchAnnouncements, fetchGoogleClientId, googleLoginApi } from "./api";
 import { Buddy, IDLE_LINE, THINKING_LINES, verdictLine } from "./Buddy";
 import type { Mood } from "./Buddy";
+import { analyzeItem } from "./gemini";
+import type { Analysis } from "./gemini";
 import { getGoogleAccessToken } from "./google";
-import { daysLeft, extractKeywords, matchAnnouncements } from "./matching";
-import type { Announcement, Profile } from "./types";
+import { daysLeft, extractKeywords, matchWithKeywords } from "./matching";
+import type { Announcement, MatchResult, Profile } from "./types";
+
+/** 본문에서 URL만 파랗게 — textarea 뒤에 겹쳐 그리는 미러 레이어용 */
+const URL_SPLIT_RE = /(https?:\/\/[^\s]+)/g;
+
+function highlightSegments(t: string) {
+  return t.split(URL_SPLIT_RE).map((part, i) =>
+    i % 2 === 1 ? (
+      <span key={i} className="url-hl">
+        {part}
+      </span>
+    ) : (
+      <span key={i}>{part}</span>
+    ),
+  );
+}
 
 const STORAGE_KEY = "matcher.profile";
 const MAIN_SITE = "https://26-ai-data-supporters.vercel.app";
@@ -70,10 +87,42 @@ export default function App() {
 
   const liveKeywords = useMemo(() => extractKeywords(text), [text]);
 
-  const { results } = useMemo(
-    () => matchAnnouncements(debounced, filtered),
-    [debounced, filtered],
-  );
+  // ── Gemini 분석: 링크까지 읽고 정확한 키워드/멘트를 뽑는다 (실패 시 로컬 폴백) ──
+  const [llm, setLlm] = useState<{ forText: string; analysis: Analysis } | null>(null);
+  const [aiBusy, setAiBusy] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    abortRef.current?.abort();
+    if (debounced.trim().length < 8) {
+      setAiBusy(false);
+      return;
+    }
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+    setAiBusy(true);
+    analyzeItem(debounced, ctrl.signal)
+      .then((a) => {
+        if (ctrl.signal.aborted) return;
+        if (a) setLlm({ forText: debounced, analysis: a });
+        setAiBusy(false);
+      })
+      .catch(() => {
+        if (!ctrl.signal.aborted) setAiBusy(false);
+      });
+    return () => ctrl.abort();
+  }, [debounced]);
+
+  const activeLlm = llm && llm.forText === debounced ? llm.analysis : null;
+
+  const results = useMemo<MatchResult[]>(() => {
+    if (!debounced.trim()) return [];
+    const local = extractKeywords(debounced);
+    const keywords = activeLlm
+      ? Array.from(new Set([...activeLlm.keywords, ...local]))
+      : local;
+    return matchWithKeywords(keywords, filtered);
+  }, [debounced, filtered, activeLlm]);
   const maxScore = results[0]?.score ?? 1;
 
   // ── 캐릭터 상태 머신: 입력 → 궁리(thinking) → 깨달음(eureka)/갸웃(puzzled) ──
@@ -82,6 +131,7 @@ export default function App() {
   const [thinkingLine, setThinkingLine] = useState(THINKING_LINES[0]);
   const verdictTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const thinkIdx = useRef(0);
+  const mirrorRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!text.trim()) {
@@ -98,16 +148,27 @@ export default function App() {
   useEffect(() => {
     if (!debounced.trim()) return;
     if (verdictTimer.current) clearTimeout(verdictTimer.current);
-    const kws = extractKeywords(debounced);
     const count = results.length;
+
+    // Gemini 분석이 도착했으면 그 멘트를 바로 사용
+    if (activeLlm) {
+      setMood(count > 0 ? "eureka" : "puzzled");
+      setLine(
+        count > 0
+          ? `${activeLlm.comment} 지금 모집 중인 ${count}건을 찾았어요!`
+          : `${activeLlm.comment} ...그런데 조건에 맞는 모집 공고가 안 보이네요. 표현을 조금 바꿔볼까요?`,
+      );
+      return;
+    }
+    // 아직이면 잠시 궁리 후 로컬 분야 사전으로 폴백
     verdictTimer.current = setTimeout(() => {
       setMood(count > 0 ? "eureka" : "puzzled");
-      setLine(verdictLine(kws, count));
-    }, 750);
+      setLine(verdictLine(debounced, count));
+    }, 900);
     return () => {
       if (verdictTimer.current) clearTimeout(verdictTimer.current);
     };
-  }, [debounced, results]);
+  }, [debounced, results, activeLlm]);
 
   async function handleGoogleLogin() {
     if (authBusy) return;
@@ -153,7 +214,7 @@ export default function App() {
           <a className="logo-mark" href={MAIN_SITE} title="창업메이트 홈">
             K
           </a>
-          <a className="crumb" href={MAIN_SITE}>
+          <a className="crumb crumb-root" href={MAIN_SITE}>
             <span className="crumb-badge k">K</span> 창업메이트
           </a>
           <span className="crumb-sep">/</span>
@@ -250,20 +311,29 @@ export default function App() {
               <div className="card-head">
                 <span className="ic">{IconPencil}</span> 아이템 설명
               </div>
-              <textarea
-                className="idea-input"
-                placeholder={
-                  "준비 중인 사업이나 아이템을 자유롭게 적어보세요.\n\n예) AI 기반 의료 번역 서비스를 준비 중인 예비창업자예요. 모바일 앱으로 해외 환자와 병원을 연결하고 싶어요."
-                }
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                autoFocus
-              />
+              <div className="input-wrap">
+                <div className="input-mirror" ref={mirrorRef} aria-hidden="true">
+                  {highlightSegments(text)}
+                  {"​"}
+                </div>
+                <textarea
+                  className="idea-input"
+                  placeholder={
+                    "준비 중인 사업이나 아이템을 자유롭게 적어보세요. 회사/제품 링크를 붙여넣으면 내용까지 읽고 분석해요.\n\n예) AI 기반 의료 번역 서비스를 준비 중인 예비창업자예요. 모바일 앱으로 해외 환자와 병원을 연결하고 싶어요."
+                  }
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  onScroll={(e) => {
+                    if (mirrorRef.current) mirrorRef.current.scrollTop = e.currentTarget.scrollTop;
+                  }}
+                  autoFocus
+                />
+              </div>
               <div className="card-row">
                 <span className="ic">{IconTag}</span> <span className="lbl">키워드 추출</span>
                 <span className="right">
-                  {liveKeywords.length > 0 ? (
-                    liveKeywords.slice(0, 8).map((k) => (
+                  {(activeLlm?.keywords ?? liveKeywords).length > 0 ? (
+                    (activeLlm?.keywords ?? liveKeywords).slice(0, 8).map((k) => (
                       <span key={k} className="chip">
                         {k}
                       </span>
@@ -272,6 +342,20 @@ export default function App() {
                     <span className="status-mut">입력 대기</span>
                   )}
                 </span>
+              </div>
+              <div className="card-row">
+                <span className="ic">{IconSpark}</span> <span className="lbl">AI 분석</span>
+                {aiBusy ? (
+                  <span className="right" style={{ color: "var(--amber)" }}>
+                    <span className="dot amber" /> Gemini 분석 중…
+                  </span>
+                ) : activeLlm ? (
+                  <span className="right status-green">
+                    <span className="dot" /> Gemini · {activeLlm.category || "분석 완료"}
+                  </span>
+                ) : (
+                  <span className="right status-mut">대기 중</span>
+                )}
               </div>
               <div className="card-row">
                 <span className="ic">{IconDb}</span> <span className="lbl">공고 데이터</span>
@@ -453,6 +537,16 @@ const IconDb = (
 const IconActivity = (
   <Ic>
     <path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2" />
+  </Ic>
+);
+
+const IconSpark = (
+  <Ic>
+    <path d="M12 3v3" />
+    <path d="M12 18v3" />
+    <path d="M3 12h3" />
+    <path d="M18 12h3" />
+    <path d="M12 8.5 13.4 10.6 15.5 12 13.4 13.4 12 15.5 10.6 13.4 8.5 12 10.6 10.6Z" />
   </Ic>
 );
 

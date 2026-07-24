@@ -23,10 +23,11 @@ _TAG_RE = re.compile(r"<[^>]+>")
 
 
 def _parse_period(raw: str | None) -> tuple[str | None, str | None]:
-    """'20260701 ~ 20260731' → ('20260701','20260731'). 상시/예산소진시 등은 (None, None)."""
+    """'2026-07-24 ~ 2026-08-14' → ('20260724','20260814'). 상시/예산소진시 등은 (None, None)."""
     if not raw:
         return None, None
-    dates = re.findall(r"20\d{6}", raw)
+    # YYYY-MM-DD / YYYY.MM.DD / YYYYMMDD 모두 허용 → YYYYMMDD로 정규화
+    dates = ["".join(m) for m in re.findall(r"(20\d{2})[.\-]?(\d{2})[.\-]?(\d{2})", raw)]
     if len(dates) >= 2:
         return dates[0], dates[1]
     if len(dates) == 1:

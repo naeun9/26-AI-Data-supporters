@@ -41,10 +41,15 @@ function Countdown({ end }: { end: Date }) {
   );
 }
 
+/** thum.io 스크린샷 URL — App의 프리로드와 동일한 문자열이어야 브라우저 캐시가 맞는다 */
+export function shotUrl(url: string): string {
+  return `https://image.thum.io/get/width/900/${url}`;
+}
+
 /** 공고 사이트 첫 화면 미리보기 */
 function SitePreview({ url }: { url: string }) {
   const [state, setState] = useState<"loading" | "ok" | "fail">("loading");
-  const shot = `https://image.thum.io/get/width/900/${url}`;
+  const shot = shotUrl(url);
   return (
     <div className="preview-wrap">
       <a href={url} target="_blank" rel="noreferrer" className="preview-link">

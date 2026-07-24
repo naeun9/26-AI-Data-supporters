@@ -11,7 +11,7 @@ import {
 import type { GlobalOpportunity } from "./api";
 import { Buddy, IDLE_LINE, THINKING_LINES, verdictLine } from "./Buddy";
 import type { Mood } from "./Buddy";
-import { DetailPanel, faviconUrl } from "./DetailPanel";
+import { DetailPanel, faviconUrl, shotUrl } from "./DetailPanel";
 import { analyzeItem, focusPoint } from "./gemini";
 import type { Analysis } from "./gemini";
 import { getGoogleAccessToken } from "./google";
@@ -286,6 +286,28 @@ export default function App() {
         .catch(() => {});
     }
   }, [results]);
+
+  // 사이트 스크린샷 프리로드 — 드로어를 열기 전에 미리 받아 즉시 뜨게
+  const preloadedShots = useRef(new Set<string>());
+
+  useEffect(() => {
+    const targets = [
+      ...results.slice(0, 8).map((r) => r.notice.detl_pg_url),
+      ...saved
+        .map((s) => announcements?.find((a) => a.pbanc_sn === s.sn)?.detl_pg_url)
+        .slice(0, 5),
+    ];
+    // 검색 결과가 바뀌고 1초 뒤(입력이 잦아든 뒤)부터 순차 프리로드
+    const timer = setTimeout(() => {
+      for (const u of targets) {
+        if (!u || preloadedShots.current.has(u)) continue;
+        preloadedShots.current.add(u);
+        const img = new Image();
+        img.src = shotUrl(u);
+      }
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [results, saved, announcements]);
 
   // 선택 공고가 결과에서 사라지면 패널 닫기 (저장함에서 연 경우는 유지)
   useEffect(() => {

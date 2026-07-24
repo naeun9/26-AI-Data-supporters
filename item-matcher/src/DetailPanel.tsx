@@ -84,17 +84,24 @@ function fmtDate(yyyymmdd: string | null): string {
   return `${yyyymmdd.slice(0, 4)}.${yyyymmdd.slice(4, 6)}.${yyyymmdd.slice(6, 8)}`;
 }
 
+import type { NoticeInsight } from "./gemini";
+
+/** KISED가 이메일 등을 암호화해 내려주는 값(base64 덩어리) 감지 */
+function looksEncrypted(v: string): boolean {
+  return /^[A-Za-z0-9+/=]{20,}$/.test(v.trim());
+}
+
 interface Props {
   sel: MatchResult;
   detail: AnnouncementDetail | null;
-  focus: string | null;
+  insight: NoticeInsight | null;
   focusBusy: boolean;
   saved: boolean;
   onToggleSave: () => void;
   onClose: () => void;
 }
 
-export function DetailPanel({ sel, detail, focus, focusBusy, saved, onToggleSave, onClose }: Props) {
+export function DetailPanel({ sel, detail, insight, focusBusy, saved, onToggleSave, onClose }: Props) {
   const n = sel.notice;
   const time = parseDeadlineTime(detail?.pbanc_ctnt ?? null);
   const end = deadlineDate(n.pbanc_rcpt_end_dt, time);
@@ -134,7 +141,10 @@ export function DetailPanel({ sel, detail, focus, focusBusy, saved, onToggleSave
         ["이메일", detail.aply_mthd_eml_rcpt_istc],
         ["팩스", detail.aply_mthd_fax_rcpt_istc],
         ["기타", detail.aply_mthd_etc_istc],
-      ].filter(([, v]) => v && String(v).trim())
+      ]
+        .filter(([, v]) => v && String(v).trim())
+        // 암호화된 값(이메일 등)은 보여줘 봐야 의미 없음 → 공고 페이지 안내로 대체
+        .map(([k, v]) => [k, looksEncrypted(String(v)) ? "공고 페이지에서 확인" : v] as const)
     : [];
 
   return (
@@ -176,11 +186,23 @@ export function DetailPanel({ sel, detail, focus, focusBusy, saved, onToggleSave
           <span className="focus-wait">공고를 읽고 핵심을 뽑는 중…</span>
         ) : (
           <span className="focus-text">
-            {focus ??
+            {insight?.focus ??
               `'${sel.matched.slice(0, 3).join("', '")}' 조건이 정확히 겹치는 공고 — 신청 자격 요건부터 확인하세요.`}
           </span>
         )}
       </div>
+
+      {/* 주요 지원사항 — 공고 본문에서 AI가 뽑은 혜택 요약 */}
+      {insight && insight.benefits.length > 0 && (
+        <div className="benefit-box">
+          <div className="benefit-title">주요 지원사항</div>
+          <ul className="benefit-list">
+            {insight.benefits.map((b) => (
+              <li key={b}>{b}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* 공고 사이트 미리보기 — 서버사이드 스크린샷(thum.io)이라 iframe 차단 무관 */}
       {n.detl_pg_url && <SitePreview url={n.detl_pg_url} />}

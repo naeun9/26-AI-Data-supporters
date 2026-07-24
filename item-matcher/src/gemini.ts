@@ -32,19 +32,30 @@ interface GeminiPart {
   text?: string;
 }
 
-/** 선택한 공고 × 사용자 아이템 → 빨간 집중 포인트 한 줄. 실패 시 null */
-export async function focusPoint(
+export interface NoticeInsight {
+  focus: string;
+  /** 주요 지원사항 요약 (지원금·기간·혜택 등) */
+  benefits: string[];
+}
+
+/** 선택한 공고 × 사용자 아이템 → 집중 포인트 한 줄 + 주요 지원사항 불릿. 실패 시 null */
+export async function noticeInsight(
   userText: string,
   noticeTitle: string,
   noticeBody: string,
   signal?: AbortSignal,
-): Promise<string | null> {
+): Promise<NoticeInsight | null> {
   if (!GEMINI_KEY) return null;
-  const prompt = `한국 창업지원 공고와 지원자의 아이템입니다. 이 지원자가 이 공고에 지원할 때 가장 중요한 "집중 포인트"를 정확히 한 문장(45자 이내)으로 쓰세요. 자격요건 함정, 준비서류, 마감 시각, 평가 포인트 중 가장 결정적인 것 하나만. 문장만 출력하세요.
+  const prompt = `한국 창업지원 공고와 지원자의 아이템입니다. 아래 JSON 하나만 출력하세요.
+
+{"focus": "...", "benefits": ["...", "..."]}
+
+- focus: 이 지원자가 이 공고에 지원할 때 가장 중요한 집중 포인트 한 문장(45자 이내). 자격요건 함정, 준비서류, 마감 시각, 평가 포인트 중 가장 결정적인 것 하나만.
+- benefits: 공고 내용에서 뽑은 "주요 지원사항" 3~5개. 각 30자 이내 명사형 (예: "최대 1억 원 사업화 자금", "전담 멘토링 6개월", "사무공간 무상 제공"). 공고에 명시된 것만, 지어내지 말 것.
 
 [지원자 아이템] ${userText.slice(0, 500)}
 [공고 제목] ${noticeTitle}
-[공고 내용] ${noticeBody.slice(0, 2500)}`;
+[공고 내용] ${noticeBody.slice(0, 3000)}`;
   try {
     const res = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
@@ -53,19 +64,30 @@ export async function focusPoint(
         headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_KEY },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.4, maxOutputTokens: 500, thinkingConfig: { thinkingBudget: 0 } },
+          generationConfig: {
+            temperature: 0.4,
+            maxOutputTokens: 800,
+            responseMimeType: "application/json",
+            thinkingConfig: { thinkingBudget: 0 },
+          },
         }),
         signal,
       },
     );
     if (!res.ok) return null;
     const data = (await res.json()) as { candidates?: Array<{ content?: { parts?: GeminiPart[] } }> };
-    const line = (data.candidates?.[0]?.content?.parts ?? [])
-      .map((p) => p.text ?? "")
-      .join("")
-      .trim()
-      .replace(/^["'「]|["'」]$/g, "");
-    return line || null;
+    const raw = (data.candidates?.[0]?.content?.parts ?? []).map((p) => p.text ?? "").join("");
+    const m = raw.match(/\{[\s\S]*\}/);
+    if (!m) return null;
+    const parsed = JSON.parse(m[0]) as Partial<NoticeInsight>;
+    if (typeof parsed.focus !== "string") return null;
+    return {
+      focus: parsed.focus.trim(),
+      benefits: (Array.isArray(parsed.benefits) ? parsed.benefits : [])
+        .filter((b): b is string => typeof b === "string" && b.trim().length > 0)
+        .map((b) => b.trim())
+        .slice(0, 5),
+    };
   } catch {
     return null;
   }

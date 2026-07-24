@@ -1175,9 +1175,57 @@ select.filter {
   font-size: 12.5px;
   line-height: 1.7;
   color: var(--mut);
-  max-height: 200px;
+  max-height: 260px;
   overflow-y: auto;
   white-space: pre-wrap;
+}
+
+/* 주요 지원사항 */
+.benefit-box {
+  margin-top: 10px;
+  border: 1px solid #d1fae5;
+  background: #f0fdf9;
+  border-radius: 10px;
+  padding: 11px 14px;
+}
+
+.benefit-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--green);
+  margin-bottom: 6px;
+}
+
+.benefit-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.benefit-list li {
+  font-size: 13px;
+  color: var(--ink);
+  font-weight: 550;
+  padding-left: 18px;
+  position: relative;
+}
+
+.benefit-list li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--green-dot);
+  font-weight: 800;
+}
+
+.idea-msg {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--green);
+  animation: rise 0.25s ease both;
 }
 
 .detail-links {

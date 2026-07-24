@@ -12,8 +12,8 @@ import type { GlobalOpportunity } from "./api";
 import { Buddy, IDLE_LINE, THINKING_LINES, verdictLine } from "./Buddy";
 import type { Mood } from "./Buddy";
 import { DetailPanel, faviconUrl, shotUrl } from "./DetailPanel";
-import { analyzeItem, focusPoint } from "./gemini";
-import type { Analysis } from "./gemini";
+import { analyzeItem, noticeInsight } from "./gemini";
+import type { Analysis, NoticeInsight } from "./gemini";
 import { getGoogleAccessToken } from "./google";
 import {
   daysLeft,
@@ -72,6 +72,28 @@ function loadSaved(): SavedItem[] {
   } catch {
     return [];
   }
+}
+
+/** 내 사업 아이템 설명 저장/불러오기 */
+const IDEAS_KEY = "matcher.ideas";
+
+interface SavedIdea {
+  id: string;
+  text: string;
+}
+
+function loadIdeas(): SavedIdea[] {
+  try {
+    return JSON.parse(localStorage.getItem(IDEAS_KEY) ?? "[]") as SavedIdea[];
+  } catch {
+    return [];
+  }
+}
+
+function ideaLabel(text: string): string {
+  const t = text.replace(/https?:\/\/\S+/gi, " ").replace(/\s+/g, " ").trim();
+  if (t) return t.length > 26 ? `${t.slice(0, 26)}…` : t;
+  return "링크 아이템";
 }
 
 function loadProfile(): Profile | null {
@@ -196,7 +218,7 @@ export default function App() {
   const [selected, setSelected] = useState<MatchResult | null>(null);
   const [selectedPinned, setSelectedPinned] = useState(false); // 저장함에서 연 경우
   const [detailMap, setDetailMap] = useState<Record<number, AnnouncementDetail>>({});
-  const [focus, setFocus] = useState<{ sn: number; line: string } | null>(null);
+  const [focus, setFocus] = useState<{ sn: number; insight: NoticeInsight } | null>(null);
   const [focusBusy, setFocusBusy] = useState(false);
 
   // ── 로그인 게이팅: 비로그인은 상위 2건 + 무료 검색 횟수 제한 ──
@@ -209,6 +231,26 @@ export default function App() {
     setQuota(bumpQuota());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debounced]);
+
+  // ── 내 아이템 저장/불러오기 ──
+  const [ideas, setIdeas] = useState<SavedIdea[]>(loadIdeas);
+  const [ideaMsg, setIdeaMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem(IDEAS_KEY, JSON.stringify(ideas));
+  }, [ideas]);
+
+  function saveIdea() {
+    const t = text.trim();
+    if (!t) return;
+    if (ideas.some((i) => i.text === t)) {
+      setIdeaMsg("이미 저장된 아이템이에요");
+    } else {
+      setIdeas((list) => [{ id: `idea-${Date.now()}`, text: t }, ...list].slice(0, 10));
+      setIdeaMsg("아이템을 저장했어요!");
+    }
+    setTimeout(() => setIdeaMsg(null), 2200);
+  }
 
   // ── 사업 저장함 ──
   const [saved, setSaved] = useState<SavedItem[]>(loadSaved);
@@ -363,9 +405,9 @@ export default function App() {
         if (d) setDetailMap((m) => (m[sn] ? m : { ...m, [sn]: d }));
         if (!d || focus?.sn === sn) return;
         setFocusBusy(true);
-        focusPoint(debounced, d.biz_pbanc_nm, d.pbanc_ctnt ?? "")
-          .then((line) => {
-            if (line) setFocus({ sn, line });
+        noticeInsight(debounced, d.biz_pbanc_nm, d.pbanc_ctnt ?? "")
+          .then((insight) => {
+            if (insight) setFocus({ sn, insight });
           })
           .finally(() => setFocusBusy(false));
       })
@@ -408,7 +450,9 @@ export default function App() {
       );
       return;
     }
-    // 아직이면 잠시 궁리 후 로컬 분야 사전으로 폴백
+    // AI가 아직 읽는 중이면 아는 척하지 않고 계속 궁리 상태 유지
+    if (aiBusy) return;
+    // AI 분석이 없을 때만(짧은 입력·실패) 잠시 궁리 후 로컬 분야 사전으로 폴백
     verdictTimer.current = setTimeout(() => {
       setMood(count > 0 ? "eureka" : "puzzled");
       setLine(verdictLine(debounced, count));
@@ -416,7 +460,7 @@ export default function App() {
     return () => {
       if (verdictTimer.current) clearTimeout(verdictTimer.current);
     };
-  }, [debounced, results, activeLlm]);
+  }, [debounced, results, activeLlm, aiBusy]);
 
   async function handleGoogleLogin() {
     if (authBusy) return;
@@ -529,7 +573,15 @@ export default function App() {
             </div>
 
             <div className="card">
-              <div className="card-head">아이템 설명</div>
+              <div className="card-head">
+                아이템 설명
+                <span style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+                  {ideaMsg && <span className="idea-msg">{ideaMsg}</span>}
+                  <button className="save-btn" onClick={saveIdea} disabled={!text.trim()}>
+                    아이템 저장
+                  </button>
+                </span>
+              </div>
               <div className="input-wrap">
                 {!text.trim() && (
                   <div className="guide-box" aria-hidden="true">
@@ -592,6 +644,33 @@ export default function App() {
                 </span>
               </div>
             </div>
+
+            {ideas.length > 0 && (
+              <>
+                <span className="panel-label">저장한 아이템</span>
+                <div className="card saved-card">
+                  {ideas.map((idea) => (
+                    <button
+                      key={idea.id}
+                      className="saved-chip"
+                      onClick={() => setText(idea.text)}
+                      title={idea.text}
+                    >
+                      <span className="saved-title">{ideaLabel(idea.text)}</span>
+                      <span
+                        className="saved-x"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIdeas((list) => list.filter((x) => x.id !== idea.id));
+                        }}
+                      >
+                        ✕
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
 
             {saved.length > 0 && (
               <>
@@ -829,7 +908,7 @@ export default function App() {
             <DetailPanel
               sel={selected}
               detail={detailMap[selected.notice.pbanc_sn] ?? null}
-              focus={focus?.sn === selected.notice.pbanc_sn ? focus.line : null}
+              insight={focus?.sn === selected.notice.pbanc_sn ? focus.insight : null}
               focusBusy={focusBusy}
               saved={saved.some((s) => s.sn === selected.notice.pbanc_sn)}
               onToggleSave={() => toggleSave(selected)}

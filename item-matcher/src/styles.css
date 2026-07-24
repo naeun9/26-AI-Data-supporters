@@ -404,6 +404,191 @@ button {
   font-weight: 500;
 }
 
+/* ── 캐릭터 (노션풍 라인 드로잉) ─────────────────────────────── */
+.buddy-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.buddy {
+  flex: none;
+  animation: bob 3.4s ease-in-out infinite;
+}
+
+.buddy svg {
+  display: block;
+  overflow: visible;
+}
+
+/* 부위별 부드러운 트랜지션 */
+.buddy .brow,
+.buddy .eyes,
+.buddy .mouth,
+.buddy .pencil,
+.buddy .spark {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1),
+    opacity 0.3s ease;
+}
+
+/* 입: 기본 전부 숨김 → mood별 표시 */
+.buddy .mouth {
+  opacity: 0;
+}
+
+.mood-idle .m-idle,
+.mood-thinking .m-o,
+.mood-eureka .m-smile,
+.mood-puzzled .m-flat {
+  opacity: 1;
+}
+
+/* 궁리: 시선 위로, 한쪽 눈썹만 치켜올림, 연필 등장 */
+.buddy .pencil,
+.buddy .spark {
+  opacity: 0;
+}
+
+.mood-thinking .eyes {
+  transform: translate(-1.5px, -3px);
+}
+
+.mood-thinking .brow-r {
+  transform: translateY(-3px) rotate(-6deg);
+}
+
+.mood-thinking .pencil {
+  opacity: 1;
+  transform: rotate(-4deg);
+}
+
+/* 깨달음: 눈썹 활짝, 스파크 반짝 */
+.mood-eureka .brow-l,
+.mood-eureka .brow-r {
+  transform: translateY(-3.5px);
+}
+
+.mood-eureka .spark {
+  opacity: 1;
+  animation: sparkle 0.9s ease;
+}
+
+.mood-eureka .buddy,
+.mood-eureka svg {
+  animation-duration: 2.6s;
+}
+
+/* 갸웃: 눈썹 안쪽으로 찌푸림, 시선 아래 */
+.mood-puzzled .brow-l {
+  transform: translateY(-1px) rotate(8deg);
+}
+
+.mood-puzzled .brow-r {
+  transform: translateY(-1px) rotate(-8deg);
+}
+
+.mood-puzzled .eyes {
+  transform: translateY(1.5px);
+}
+
+/* 눈 깜빡임 */
+.buddy .blink {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: blink 4.6s infinite;
+}
+
+/* 말풍선 */
+.bubble {
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  border-bottom-left-radius: 3px;
+  box-shadow: var(--shadow);
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink);
+  margin-top: 8px;
+  animation: rise 0.3s ease both;
+  min-height: 20px;
+}
+
+.bubble .dots {
+  display: inline-flex;
+  gap: 3px;
+  margin-left: 6px;
+  vertical-align: baseline;
+}
+
+.bubble .dots i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--faint);
+  animation: dotwave 1.2s ease-in-out infinite;
+}
+
+.bubble .dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.bubble .dots i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-4px) rotate(1.5deg);
+  }
+}
+
+@keyframes blink {
+  0%,
+  93%,
+  100% {
+    transform: scaleY(1);
+  }
+  95%,
+  97% {
+    transform: scaleY(0.1);
+  }
+}
+
+@keyframes sparkle {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes dotwave {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-3px);
+  }
+}
+
 /* ── 입력 textarea ─────────────────────────────── */
 .idea-input {
   width: 100%;

@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { API_BASE, fetchAnnouncements, fetchGoogleClientId, googleLoginApi } from "./api";
+import { Buddy, IDLE_LINE, THINKING_LINES, verdictLine } from "./Buddy";
+import type { Mood } from "./Buddy";
 import { getGoogleAccessToken } from "./google";
 import { daysLeft, extractKeywords, matchAnnouncements } from "./matching";
 import type { Announcement, Profile } from "./types";
@@ -73,6 +75,39 @@ export default function App() {
     [debounced, filtered],
   );
   const maxScore = results[0]?.score ?? 1;
+
+  // ── 캐릭터 상태 머신: 입력 → 궁리(thinking) → 깨달음(eureka)/갸웃(puzzled) ──
+  const [mood, setMood] = useState<Mood>("idle");
+  const [line, setLine] = useState(IDLE_LINE);
+  const [thinkingLine, setThinkingLine] = useState(THINKING_LINES[0]);
+  const verdictTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const thinkIdx = useRef(0);
+
+  useEffect(() => {
+    if (!text.trim()) {
+      if (verdictTimer.current) clearTimeout(verdictTimer.current);
+      setMood("idle");
+      setLine(IDLE_LINE);
+      return;
+    }
+    thinkIdx.current = (thinkIdx.current + 1) % THINKING_LINES.length;
+    setThinkingLine(THINKING_LINES[thinkIdx.current]);
+    setMood("thinking");
+  }, [text]);
+
+  useEffect(() => {
+    if (!debounced.trim()) return;
+    if (verdictTimer.current) clearTimeout(verdictTimer.current);
+    const kws = extractKeywords(debounced);
+    const count = results.length;
+    verdictTimer.current = setTimeout(() => {
+      setMood(count > 0 ? "eureka" : "puzzled");
+      setLine(verdictLine(kws, count));
+    }, 750);
+    return () => {
+      if (verdictTimer.current) clearTimeout(verdictTimer.current);
+    };
+  }, [debounced, results]);
 
   async function handleGoogleLogin() {
     if (authBusy) return;
@@ -192,6 +227,24 @@ export default function App() {
           {/* ── 왼쪽: 입력 + 상태 ── */}
           <div className="col">
             <span className="panel-label">내 사업 · 아이템</span>
+
+            <div className="buddy-row">
+              <Buddy mood={mood} />
+              <div className="bubble" key={mood === "thinking" ? `t-${thinkingLine}` : line}>
+                {mood === "thinking" ? (
+                  <>
+                    {thinkingLine}
+                    <span className="dots">
+                      <i />
+                      <i />
+                      <i />
+                    </span>
+                  </>
+                ) : (
+                  line
+                )}
+              </div>
+            </div>
 
             <div className="card">
               <div className="card-head">

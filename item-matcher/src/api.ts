@@ -6,12 +6,27 @@ export const API_BASE: string =
 
 let cache: Announcement[] | null = null;
 
+/** KISED 데이터에 섞여 오는 HTML 엔티티(&apos; 등) 복원 */
+function decodeEntities(s: string | null): string | null {
+  if (!s) return s;
+  return s
+    .replace(/&apos;|&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
+}
+
 export async function fetchAnnouncements(): Promise<Announcement[]> {
   if (cache) return cache;
   const res = await fetch(`${API_BASE}/api/announcement/open`);
   if (!res.ok) throw new Error(`공고 API 오류: ${res.status}`);
   const data = (await res.json()) as { items: Announcement[] };
-  cache = data.items;
+  cache = data.items.map((n) => ({
+    ...n,
+    biz_pbanc_nm: decodeEntities(n.biz_pbanc_nm) ?? n.biz_pbanc_nm,
+    pbanc_ntrp_nm: decodeEntities(n.pbanc_ntrp_nm),
+  }));
   return cache;
 }
 

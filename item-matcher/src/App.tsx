@@ -168,7 +168,11 @@ export default function App() {
 
       <main className="page">
         <div className="page-head">
-          <div className="page-icon">⚡</div>
+          <div className="page-icon">
+            <Ic size={20}>
+              <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z" />
+            </Ic>
+          </div>
           <h1 className="page-title">
             아이템 매칭<span className="sub">· 실시간</span>
           </h1>
@@ -191,7 +195,7 @@ export default function App() {
 
             <div className="card">
               <div className="card-head">
-                <span className="ic">✏️</span> 아이템 설명
+                <span className="ic">{IconPencil}</span> 아이템 설명
               </div>
               <textarea
                 className="idea-input"
@@ -203,7 +207,7 @@ export default function App() {
                 autoFocus
               />
               <div className="card-row">
-                <span className="ic">🏷️</span> <span className="lbl">키워드 추출</span>
+                <span className="ic">{IconTag}</span> <span className="lbl">키워드 추출</span>
                 <span className="right">
                   {liveKeywords.length > 0 ? (
                     liveKeywords.slice(0, 8).map((k) => (
@@ -217,11 +221,11 @@ export default function App() {
                 </span>
               </div>
               <div className="card-row">
-                <span className="ic">🗂️</span> <span className="lbl">공고 데이터</span>
+                <span className="ic">{IconDb}</span> <span className="lbl">공고 데이터</span>
                 {dataStatus}
               </div>
               <div className="card-row">
-                <span className="ic">⚙️</span> <span className="lbl">실시간 매칭</span>
+                <span className="ic">{IconActivity}</span> <span className="lbl">실시간 매칭</span>
                 <span className="right status-green">
                   <span className="dot" /> Active
                 </span>
@@ -351,6 +355,53 @@ export default function App() {
     </>
   );
 }
+
+/** 얇은 라인 아이콘 (lucide 스타일, stroke = currentColor) */
+function Ic({ children, size = 15 }: { children: React.ReactNode; size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {children}
+    </svg>
+  );
+}
+
+const IconPencil = (
+  <Ic>
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+  </Ic>
+);
+
+const IconTag = (
+  <Ic>
+    <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42Z" />
+    <circle cx="7.5" cy="7.5" r="0.5" fill="currentColor" />
+  </Ic>
+);
+
+const IconDb = (
+  <Ic>
+    <ellipse cx="12" cy="5" rx="9" ry="3" />
+    <path d="M3 5v14a9 3 0 0 0 18 0V5" />
+    <path d="M3 12a9 3 0 0 0 18 0" />
+  </Ic>
+);
+
+const IconActivity = (
+  <Ic>
+    <path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2" />
+  </Ic>
+);
 
 function GoogleIcon() {
   return (

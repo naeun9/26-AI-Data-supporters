@@ -22,6 +22,8 @@ app = FastAPI(title="KISED 공공데이터 프록시", version="0.3.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    # 별도 배포된 서브 서비스(아이템 매칭 등)가 같은 API를 쓸 수 있게 vercel.app 허용
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )

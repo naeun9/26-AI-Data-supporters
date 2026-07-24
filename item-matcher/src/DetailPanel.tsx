@@ -121,7 +121,7 @@ export function DetailPanel({ sel, detail, focus, focusBusy, saved, onToggleSave
       description: [n.pbanc_ntrp_nm, n.supt_biz_clsfc, `마감 ${fmtDate(n.pbanc_rcpt_end_dt)}`]
         .filter(Boolean)
         .join(" · "),
-      url: n.detl_pg_url ?? "https://changup-item-matcher.vercel.app",
+      url: n.detl_pg_url ?? "https://changupmate.com",
     });
     setShareMsg(msg ?? "카카오톡 공유 창을 열었어요!");
   }

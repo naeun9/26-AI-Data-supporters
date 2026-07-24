@@ -11,7 +11,7 @@ import {
 import type { GlobalOpportunity } from "./api";
 import { Buddy, IDLE_LINE, THINKING_LINES, verdictLine } from "./Buddy";
 import type { Mood } from "./Buddy";
-import { DetailPanel, faviconUrl, shotUrl } from "./DetailPanel";
+import { DetailPanel, faviconUrl, normalizeUrl, shotUrl } from "./DetailPanel";
 import { analyzeItem, noticeInsight } from "./gemini";
 import type { Analysis, NoticeInsight } from "./gemini";
 import { getGoogleAccessToken } from "./google";
@@ -369,7 +369,7 @@ export default function App() {
   useEffect(() => {
     // 상세가 로드됐으면 진짜 사업 사이트(사업안내 URL) 우선으로 프리로드
     const urlOf = (sn: number, fallback: string | null) =>
-      detailMap[sn]?.biz_gdnc_url?.trim() || fallback;
+      normalizeUrl(detailMap[sn]?.biz_gdnc_url) || fallback;
     const targets = [
       ...results.slice(0, 8).map((r) => urlOf(r.notice.pbanc_sn, r.notice.detl_pg_url)),
       ...saved
@@ -779,7 +779,7 @@ export default function App() {
                   const isSel = selected?.notice.pbanc_sn === sn;
                   const isLocked = locked && (exhausted || i >= FREE_VISIBLE);
                   const icon = faviconUrl(
-                    detailMap[sn]?.biz_gdnc_url?.trim() || r.notice.detl_pg_url,
+                    normalizeUrl(detailMap[sn]?.biz_gdnc_url) || r.notice.detl_pg_url,
                     32,
                   );
                   return (

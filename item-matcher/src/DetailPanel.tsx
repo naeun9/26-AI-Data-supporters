@@ -3,6 +3,13 @@ import { shareToKakao } from "./kakao";
 import { deadlineDate, formatDeadlineTime, parseDeadlineTime } from "./matching";
 import type { AnnouncementDetail, MatchResult } from "./types";
 
+/** KISED 데이터의 URL은 스킴(https://)이 빠진 경우가 많다 — 보정 */
+export function normalizeUrl(u: string | null | undefined): string | null {
+  const t = u?.trim();
+  if (!t) return null;
+  return /^https?:\/\//i.test(t) ? t : `https://${t}`;
+}
+
 /** 사이트 도메인 파비콘 (구글 파비콘 서비스) */
 export function faviconUrl(u: string | null, size = 64): string | null {
   if (!u) return null;
@@ -118,7 +125,9 @@ export function DetailPanel({ sel, detail, insight, focusBusy, saved, onToggleSa
   const end = deadlineDate(n.pbanc_rcpt_end_dt, time);
   const [shareMsg, setShareMsg] = useState<string | null>(null);
   // 미리보기는 진짜 사업 사이트(사업안내 URL) 우선 — K-Startup 래퍼 페이지는 폴백
-  const previewUrl = detail?.biz_gdnc_url?.trim() || n.detl_pg_url;
+  const gdncUrl = normalizeUrl(detail?.biz_gdnc_url);
+  const aplyUrl = normalizeUrl(detail?.biz_aply_url);
+  const previewUrl = gdncUrl || n.detl_pg_url;
   const icon = faviconUrl(previewUrl);
 
   // 드로어 열려있는 동안 배경 스크롤 잠금 + ESC로 닫기
@@ -285,13 +294,13 @@ export function DetailPanel({ sel, detail, insight, focusBusy, saved, onToggleSa
             공고 페이지 ↗
           </a>
         )}
-        {detail?.biz_aply_url && (
-          <a className="btn" href={detail.biz_aply_url} target="_blank" rel="noreferrer">
+        {aplyUrl && (
+          <a className="btn" href={aplyUrl} target="_blank" rel="noreferrer">
             바로 신청 ↗
           </a>
         )}
-        {detail?.biz_gdnc_url && (
-          <a className="btn" href={detail.biz_gdnc_url} target="_blank" rel="noreferrer">
+        {gdncUrl && (
+          <a className="btn" href={gdncUrl} target="_blank" rel="noreferrer">
             사업 안내 ↗
           </a>
         )}

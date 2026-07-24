@@ -367,10 +367,13 @@ export default function App() {
   const preloadedShots = useRef(new Set<string>());
 
   useEffect(() => {
+    // 상세가 로드됐으면 진짜 사업 사이트(사업안내 URL) 우선으로 프리로드
+    const urlOf = (sn: number, fallback: string | null) =>
+      detailMap[sn]?.biz_gdnc_url?.trim() || fallback;
     const targets = [
-      ...results.slice(0, 8).map((r) => r.notice.detl_pg_url),
+      ...results.slice(0, 8).map((r) => urlOf(r.notice.pbanc_sn, r.notice.detl_pg_url)),
       ...saved
-        .map((s) => announcements?.find((a) => a.pbanc_sn === s.sn)?.detl_pg_url)
+        .map((s) => urlOf(s.sn, announcements?.find((a) => a.pbanc_sn === s.sn)?.detl_pg_url ?? null))
         .slice(0, 5),
     ];
     // 검색 결과가 바뀌고 1초 뒤(입력이 잦아든 뒤)부터 순차 프리로드
@@ -383,7 +386,7 @@ export default function App() {
       }
     }, 1000);
     return () => clearTimeout(timer);
-  }, [results, saved, announcements]);
+  }, [results, saved, announcements, detailMap]);
 
   // 선택 공고가 결과에서 사라지면 패널 닫기 (저장함에서 연 경우는 유지)
   useEffect(() => {
@@ -775,7 +778,10 @@ export default function App() {
                   const kws = r.matched.slice(0, 4);
                   const isSel = selected?.notice.pbanc_sn === sn;
                   const isLocked = locked && (exhausted || i >= FREE_VISIBLE);
-                  const icon = faviconUrl(r.notice.detl_pg_url, 32);
+                  const icon = faviconUrl(
+                    detailMap[sn]?.biz_gdnc_url?.trim() || r.notice.detl_pg_url,
+                    32,
+                  );
                   return (
                     <div key={sn} style={{ display: "contents" }}>
                       {locked && !exhausted && i === FREE_VISIBLE && (

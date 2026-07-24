@@ -46,13 +46,24 @@ export function shotUrl(url: string): string {
   return `https://image.thum.io/get/width/900/${url}`;
 }
 
-/** 공고 사이트 첫 화면 미리보기 */
-function SitePreview({ url }: { url: string }) {
+/** 공고 사이트 첫 화면 미리보기 — 사업안내 사이트 캡처 실패 시 K-Startup 페이지로 폴백 */
+function SitePreview({ url, fallbackUrl }: { url: string; fallbackUrl?: string | null }) {
   const [state, setState] = useState<"loading" | "ok" | "fail">("loading");
-  const shot = shotUrl(url);
+  const [src, setSrc] = useState(url);
+  const shot = shotUrl(src);
+
+  function handleError() {
+    if (fallbackUrl && src !== fallbackUrl) {
+      setSrc(fallbackUrl);
+      setState("loading");
+    } else {
+      setState("fail");
+    }
+  }
+
   return (
     <div className="preview-wrap">
-      <a href={url} target="_blank" rel="noreferrer" className="preview-link">
+      <a href={src} target="_blank" rel="noreferrer" className="preview-link">
         {state !== "fail" ? (
           <>
             {state === "loading" && <div className="preview-skeleton">사이트 화면을 캡처하는 중…</div>}
@@ -62,7 +73,7 @@ function SitePreview({ url }: { url: string }) {
               alt="공고 사이트 미리보기"
               style={state === "loading" ? { display: "none" } : undefined}
               onLoad={() => setState("ok")}
-              onError={() => setState("fail")}
+              onError={handleError}
             />
           </>
         ) : (
@@ -70,7 +81,7 @@ function SitePreview({ url }: { url: string }) {
         )}
       </a>
       <div className="preview-note">
-        공고 사이트 첫 화면 미리보기 · 클릭하면{" "}
+        사업 사이트 첫 화면 미리보기 · 클릭하면{" "}
         <a href={url} target="_blank" rel="noreferrer">
           새 탭에서 열려요 ↗
         </a>
@@ -106,7 +117,9 @@ export function DetailPanel({ sel, detail, insight, focusBusy, saved, onToggleSa
   const time = parseDeadlineTime(detail?.pbanc_ctnt ?? null);
   const end = deadlineDate(n.pbanc_rcpt_end_dt, time);
   const [shareMsg, setShareMsg] = useState<string | null>(null);
-  const icon = faviconUrl(n.detl_pg_url);
+  // 미리보기는 진짜 사업 사이트(사업안내 URL) 우선 — K-Startup 래퍼 페이지는 폴백
+  const previewUrl = detail?.biz_gdnc_url?.trim() || n.detl_pg_url;
+  const icon = faviconUrl(previewUrl);
 
   // 드로어 열려있는 동안 배경 스크롤 잠금 + ESC로 닫기
   useEffect(() => {
@@ -204,8 +217,14 @@ export function DetailPanel({ sel, detail, insight, focusBusy, saved, onToggleSa
         </div>
       )}
 
-      {/* 공고 사이트 미리보기 — 서버사이드 스크린샷(thum.io)이라 iframe 차단 무관 */}
-      {n.detl_pg_url && <SitePreview url={n.detl_pg_url} />}
+      {/* 사업 사이트 미리보기 — 서버사이드 스크린샷(thum.io)이라 iframe 차단 무관 */}
+      {previewUrl && (
+        <SitePreview
+          key={previewUrl}
+          url={previewUrl}
+          fallbackUrl={previewUrl !== n.detl_pg_url ? n.detl_pg_url : null}
+        />
+      )}
 
       {/* 상세 정보 */}
       <div className="detail-rows">

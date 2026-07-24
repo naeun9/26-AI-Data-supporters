@@ -1,4 +1,4 @@
-import type { Announcement, Profile } from "./types";
+import type { Announcement, AnnouncementDetail, Profile } from "./types";
 
 /** 본진(창업메이트) 배포 백엔드를 그대로 사용 — CORS는 vercel.app 도메인 허용됨. */
 export const API_BASE: string =
@@ -28,6 +28,29 @@ export async function fetchAnnouncements(): Promise<Announcement[]> {
     pbanc_ntrp_nm: decodeEntities(n.pbanc_ntrp_nm),
   }));
   return cache;
+}
+
+const detailCache = new Map<number, Promise<AnnouncementDetail | null>>();
+
+/** 공고 상세 — 프로미스 캐시로 같은 공고 중복 요청 방지 */
+export function fetchAnnouncementDetail(sn: number): Promise<AnnouncementDetail | null> {
+  const hit = detailCache.get(sn);
+  if (hit) return hit;
+  const p = fetch(`${API_BASE}/api/announcement/${sn}`)
+    .then(async (res) => {
+      if (!res.ok) return null;
+      const d = (await res.json()) as AnnouncementDetail;
+      d.biz_pbanc_nm = decodeEntities(d.biz_pbanc_nm) ?? d.biz_pbanc_nm;
+      d.pbanc_ntrp_nm = decodeEntities(d.pbanc_ntrp_nm);
+      d.pbanc_ctnt = decodeEntities(d.pbanc_ctnt);
+      return d;
+    })
+    .catch(() => {
+      detailCache.delete(sn);
+      return null;
+    });
+  detailCache.set(sn, p);
+  return p;
 }
 
 export async function fetchGoogleClientId(): Promise<string> {

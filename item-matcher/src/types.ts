@@ -15,6 +15,22 @@ export interface Announcement {
   industries: string[];
 }
 
+/** /api/announcement/{sn} 상세 — slim + 본문/신청방법/링크/담당자 */
+export interface AnnouncementDetail extends Omit<Announcement, "industries"> {
+  pbanc_ctnt: string | null;
+  aply_excl_trgt_ctnt: string | null;
+  aply_mthd_vst_rcpt_istc: string | null;
+  aply_mthd_pssr_rcpt_istc: string | null;
+  aply_mthd_fax_rcpt_istc: string | null;
+  aply_mthd_eml_rcpt_istc: string | null;
+  aply_mthd_onli_rcpt_istc: string | null;
+  aply_mthd_etc_istc: string | null;
+  biz_gdnc_url: string | null;
+  biz_aply_url: string | null;
+  prch_cnpl_no: string | null;
+  biz_prch_dprt_nm: string | null;
+}
+
 export interface MatchResult {
   notice: Announcement;
   score: number;

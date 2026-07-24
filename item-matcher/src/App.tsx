@@ -1,12 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { API_BASE, fetchAnnouncements, fetchGoogleClientId, googleLoginApi } from "./api";
+import {
+  API_BASE,
+  fetchAnnouncementDetail,
+  fetchAnnouncements,
+  fetchGoogleClientId,
+  googleLoginApi,
+} from "./api";
 import { Buddy, IDLE_LINE, THINKING_LINES, verdictLine } from "./Buddy";
 import type { Mood } from "./Buddy";
-import { analyzeItem } from "./gemini";
+import { DetailPanel } from "./DetailPanel";
+import { analyzeItem, focusPoint } from "./gemini";
 import type { Analysis } from "./gemini";
 import { getGoogleAccessToken } from "./google";
-import { daysLeft, extractKeywords, matchWithKeywords } from "./matching";
-import type { Announcement, MatchResult, Profile } from "./types";
+import {
+  daysLeft,
+  extractKeywords,
+  formatDeadlineTime,
+  matchWithKeywords,
+  parseDeadlineTime,
+} from "./matching";
+import type { Announcement, AnnouncementDetail, MatchResult, Profile } from "./types";
 
 /** 본문에서 URL만 파랗게 — textarea 뒤에 겹쳐 그리는 미러 레이어용 */
 const URL_SPLIT_RE = /(https?:\/\/[^\s]+)/g;
@@ -124,6 +137,50 @@ export default function App() {
     return matchWithKeywords(keywords, filtered);
   }, [debounced, filtered, activeLlm]);
   const maxScore = results[0]?.score ?? 1;
+
+  // ── 공고 선택 → 상세 패널 (미리보기 + 카운트다운 + 집중포인트) ──
+  const [selected, setSelected] = useState<MatchResult | null>(null);
+  const [detailMap, setDetailMap] = useState<Record<number, AnnouncementDetail>>({});
+  const [focus, setFocus] = useState<{ sn: number; line: string } | null>(null);
+  const [focusBusy, setFocusBusy] = useState(false);
+
+  // 상위 결과 상세를 미리 받아 마감시각("오후 4시")을 리스트에도 표시
+  useEffect(() => {
+    for (const r of results.slice(0, 10)) {
+      const sn = r.notice.pbanc_sn;
+      fetchAnnouncementDetail(sn)
+        .then((d) => {
+          if (d) setDetailMap((m) => (m[sn] ? m : { ...m, [sn]: d }));
+        })
+        .catch(() => {});
+    }
+  }, [results]);
+
+  // 선택 공고가 결과에서 사라지면 패널 닫기
+  useEffect(() => {
+    if (selected && !results.some((r) => r.notice.pbanc_sn === selected.notice.pbanc_sn)) {
+      setSelected(null);
+    }
+  }, [results, selected]);
+
+  // 선택하면 상세 로드 + AI 집중포인트 생성
+  useEffect(() => {
+    if (!selected) return;
+    const sn = selected.notice.pbanc_sn;
+    fetchAnnouncementDetail(sn)
+      .then((d) => {
+        if (d) setDetailMap((m) => (m[sn] ? m : { ...m, [sn]: d }));
+        if (!d || focus?.sn === sn) return;
+        setFocusBusy(true);
+        focusPoint(debounced, d.biz_pbanc_nm, d.pbanc_ctnt ?? "")
+          .then((line) => {
+            if (line) setFocus({ sn, line });
+          })
+          .finally(() => setFocusBusy(false));
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected]);
 
   // ── 캐릭터 상태 머신: 입력 → 궁리(thinking) → 깨달음(eureka)/갸웃(puzzled) ──
   const [mood, setMood] = useState<Mood>("idle");
@@ -312,6 +369,11 @@ export default function App() {
                 <span className="ic">{IconPencil}</span> 아이템 설명
               </div>
               <div className="input-wrap">
+                {!text.trim() && (
+                  <div className="guide-box" aria-hidden="true">
+                    <span className="guide-tag">✍ 여기에 아이템을 채워주세요</span>
+                  </div>
+                )}
                 <div className="input-mirror" ref={mirrorRef} aria-hidden="true">
                   {highlightSegments(text)}
                   {"​"}
@@ -347,11 +409,11 @@ export default function App() {
                 <span className="ic">{IconSpark}</span> <span className="lbl">AI 분석</span>
                 {aiBusy ? (
                   <span className="right" style={{ color: "var(--amber)" }}>
-                    <span className="dot amber" /> Gemini 분석 중…
+                    <span className="dot amber" /> 분석 중…
                   </span>
                 ) : activeLlm ? (
                   <span className="right status-green">
-                    <span className="dot" /> Gemini · {activeLlm.category || "분석 완료"}
+                    <span className="dot" /> {activeLlm.category || "분석 완료"}
                   </span>
                 ) : (
                   <span className="right status-mut">대기 중</span>
@@ -419,56 +481,74 @@ export default function App() {
                   : "입력하는 즉시 맞춤 지원사업이 여기에 실시간으로 나타나요."}
               </div>
             ) : (
-              <div className="result-list">
-                {results.map((r, i) => {
-                  const d = daysLeft(r.notice.pbanc_rcpt_end_dt);
-                  const kws = r.matched.slice(0, 4);
-                  return (
-                    <div className="result-card" key={r.notice.pbanc_sn} style={{ "--i": i } as React.CSSProperties}>
-                      <div className="result-top">
-                        <a
-                          className="result-title"
-                          href={r.notice.detl_pg_url ?? "#"}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          {r.notice.biz_pbanc_nm}
-                        </a>
-                        {d !== null && (
-                          <span className={`dday${d <= 7 ? " urgent" : ""}`}>
-                            {d === 0 ? "오늘 마감" : `D-${d}`}
+              <div className={`results-area${selected ? " open" : ""}`}>
+                <div className="result-list">
+                  {results.map((r, i) => {
+                    const sn = r.notice.pbanc_sn;
+                    const d = daysLeft(r.notice.pbanc_rcpt_end_dt);
+                    const dt = detailMap[sn] ? parseDeadlineTime(detailMap[sn].pbanc_ctnt) : null;
+                    const kws = r.matched.slice(0, 4);
+                    const isSel = selected?.notice.pbanc_sn === sn;
+                    return (
+                      <div
+                        className={`result-card${isSel ? " selected" : ""}`}
+                        key={sn}
+                        style={{ "--i": i } as React.CSSProperties}
+                        onClick={() => setSelected(isSel ? null : r)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") setSelected(isSel ? null : r);
+                        }}
+                      >
+                        <div className="result-top">
+                          <span className="result-title">{r.notice.biz_pbanc_nm}</span>
+                          {d !== null && (
+                            <span className={`dday${d <= 7 ? " urgent" : ""}`}>
+                              {d === 0 ? "오늘 마감" : `D-${d}`}
+                              {dt && ` (${formatDeadlineTime(dt)})`}
+                            </span>
+                          )}
+                        </div>
+                        <div className="result-meta">
+                          {[r.notice.pbanc_ntrp_nm, r.notice.supt_biz_clsfc, r.notice.supt_regin]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </div>
+                        <div className="result-why">
+                          <span className="dot" />
+                          <span>
+                            <span className="why-chips">
+                              {kws.map((k) => (
+                                <span key={k} className="chip green">
+                                  {k}
+                                </span>
+                              ))}
+                            </span>
+                            키워드가 일치해요 — <b>{r.matched.length}개 조건 매칭</b>
+                            {r.matched.length > kws.length &&
+                              ` (외 ${r.matched.length - kws.length}개)`}
                           </span>
-                        )}
+                        </div>
+                        <div className="score-track">
+                          <div
+                            className="score-fill"
+                            style={{ width: `${Math.max(12, (r.score / maxScore) * 100)}%` }}
+                          />
+                        </div>
                       </div>
-                      <div className="result-meta">
-                        {[r.notice.pbanc_ntrp_nm, r.notice.supt_biz_clsfc, r.notice.supt_regin]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </div>
-                      <div className="result-why">
-                        <span className="dot" />
-                        <span>
-                          <span className="why-chips">
-                            {kws.map((k) => (
-                              <span key={k} className="chip green">
-                                {k}
-                              </span>
-                            ))}
-                          </span>
-                          키워드가 일치해요 — <b>{r.matched.length}개 조건 매칭</b>
-                          {r.matched.length > kws.length &&
-                            ` (외 ${r.matched.length - kws.length}개)`}
-                        </span>
-                      </div>
-                      <div className="score-track">
-                        <div
-                          className="score-fill"
-                          style={{ width: `${Math.max(12, (r.score / maxScore) * 100)}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
+                {selected && (
+                  <DetailPanel
+                    sel={selected}
+                    detail={detailMap[selected.notice.pbanc_sn] ?? null}
+                    focus={focus?.sn === selected.notice.pbanc_sn ? focus.line : null}
+                    focusBusy={focusBusy}
+                    onClose={() => setSelected(null)}
+                  />
+                )}
               </div>
             )}
           </div>

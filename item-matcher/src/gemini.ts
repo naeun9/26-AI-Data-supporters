@@ -30,6 +30,45 @@ interface GeminiPart {
   text?: string;
 }
 
+/** 선택한 공고 × 사용자 아이템 → 빨간 집중 포인트 한 줄. 실패 시 null */
+export async function focusPoint(
+  userText: string,
+  noticeTitle: string,
+  noticeBody: string,
+  signal?: AbortSignal,
+): Promise<string | null> {
+  if (!GEMINI_KEY) return null;
+  const prompt = `한국 창업지원 공고와 지원자의 아이템입니다. 이 지원자가 이 공고에 지원할 때 가장 중요한 "집중 포인트"를 정확히 한 문장(45자 이내)으로 쓰세요. 자격요건 함정, 준비서류, 마감 시각, 평가 포인트 중 가장 결정적인 것 하나만. 문장만 출력하세요.
+
+[지원자 아이템] ${userText.slice(0, 500)}
+[공고 제목] ${noticeTitle}
+[공고 내용] ${noticeBody.slice(0, 2500)}`;
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_KEY },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.4, maxOutputTokens: 500, thinkingConfig: { thinkingBudget: 0 } },
+        }),
+        signal,
+      },
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as { candidates?: Array<{ content?: { parts?: GeminiPart[] } }> };
+    const line = (data.candidates?.[0]?.content?.parts ?? [])
+      .map((p) => p.text ?? "")
+      .join("")
+      .trim()
+      .replace(/^["'「]|["'」]$/g, "");
+    return line || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function analyzeItem(text: string, signal?: AbortSignal): Promise<Analysis | null> {
   if (!GEMINI_KEY) return null;
   const hasUrl = /https?:\/\/\S+/i.test(text);

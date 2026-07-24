@@ -173,6 +173,50 @@ export function matchAnnouncements(
   return { keywords, results: matchWithKeywords(keywords, announcements, limit) };
 }
 
+/** 공고 본문에서 마감 시각(예: "16:00까지", "오후 4시 마감")을 파싱. 못 찾으면 null */
+export function parseDeadlineTime(ctnt: string | null): { h: number; m: number } | null {
+  if (!ctnt) return null;
+  const windowRe = /[^.\n]{0,40}(?:마감|까지|접수\s*기한|제출)[^.\n]{0,40}/g;
+  const chunks = ctnt.match(windowRe) ?? [];
+  for (const chunk of chunks) {
+    // "16:00" / "16시 30분" / "오후 4시"
+    let m = chunk.match(/(\d{1,2})\s*:\s*(\d{2})/);
+    if (m) {
+      const h = Number(m[1]);
+      const min = Number(m[2]);
+      if (h >= 0 && h <= 23 && min <= 59) return { h, m: min };
+    }
+    m = chunk.match(/(오전|오후)?\s*(\d{1,2})\s*시(?:\s*(\d{1,2})\s*분)?/);
+    if (m) {
+      let h = Number(m[2]);
+      const min = m[3] ? Number(m[3]) : 0;
+      if (m[1] === "오후" && h < 12) h += 12;
+      if (h >= 0 && h <= 23 && min <= 59) return { h, m: min };
+    }
+  }
+  return null;
+}
+
+/** {h:16,m:0} → "오후 4시", {h:14,m:30} → "오후 2시 30분" */
+export function formatDeadlineTime(t: { h: number; m: number }): string {
+  const half = t.h < 12 ? "오전" : "오후";
+  const h12 = t.h % 12 === 0 ? 12 : t.h % 12;
+  return t.m > 0 ? `${half} ${h12}시 ${t.m}분` : `${half} ${h12}시`;
+}
+
+/** 마감일(YYYYMMDD)+시각 → 마감 Date 객체 (시각 없으면 23:59:59) */
+export function deadlineDate(yyyymmdd: string | null, t: { h: number; m: number } | null): Date | null {
+  if (!yyyymmdd || yyyymmdd.length !== 8) return null;
+  return new Date(
+    Number(yyyymmdd.slice(0, 4)),
+    Number(yyyymmdd.slice(4, 6)) - 1,
+    Number(yyyymmdd.slice(6, 8)),
+    t ? t.h : 23,
+    t ? t.m : 59,
+    t ? 0 : 59,
+  );
+}
+
 /** "20260812" → 마감까지 남은 일수 (지났으면 음수) */
 export function daysLeft(yyyymmdd: string | null): number | null {
   if (!yyyymmdd || yyyymmdd.length !== 8) return null;

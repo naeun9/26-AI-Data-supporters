@@ -656,6 +656,42 @@ button {
   text-underline-offset: 2px;
 }
 
+/* 빈 입력 가이드 — 반투명 + 파란 점선 블링크 */
+.guide-box {
+  position: absolute;
+  inset: 7px;
+  border: 2px dashed var(--blue);
+  border-radius: 10px;
+  background: rgba(37, 99, 235, 0.045);
+  pointer-events: none;
+  z-index: 1;
+  animation: guideblink 1.7s ease-in-out infinite;
+}
+
+.guide-tag {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--blue);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+@keyframes guideblink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
 /* ── 키워드 칩 ─────────────────────────────── */
 .chip {
   display: inline-block;
@@ -707,10 +743,34 @@ select.filter {
   padding: 2px 9px;
 }
 
+/* 리스트 + 상세 패널 2단 — 선택 시 리스트가 스르륵 왼쪽으로 좁혀짐 */
+.results-area {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
 .result-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  flex: 1;
+  min-width: 0;
+  transition: flex-basis 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.results-area.open .result-list {
+  flex: 0 0 285px;
+}
+
+/* 좁혀진 리스트에선 근거/게이지 숨겨 컴팩트하게 */
+.results-area.open .result-why,
+.results-area.open .score-track {
+  display: none;
+}
+
+.results-area.open .result-title {
+  font-size: 13.5px;
 }
 
 .result-card {
@@ -721,10 +781,16 @@ select.filter {
   padding: 14px 16px 13px;
   animation: rise 0.35s cubic-bezier(0.21, 0.6, 0.35, 1) both;
   animation-delay: calc(var(--i) * 45ms);
+  cursor: pointer;
 }
 
 .result-card:hover {
   border-color: #c9c9cf;
+}
+
+.result-card.selected {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 1px var(--blue), var(--shadow);
 }
 
 .result-top {
@@ -810,6 +876,240 @@ select.filter {
   border-radius: 2px;
   background: linear-gradient(90deg, #34d399, #10b981);
   transition: width 0.4s ease;
+}
+
+/* ── 상세 패널 ─────────────────────────────── */
+.detail-panel {
+  flex: 1;
+  min-width: 0;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px 18px;
+  animation: slidein 0.4s cubic-bezier(0.21, 0.6, 0.35, 1) both;
+  position: sticky;
+  top: 130px;
+}
+
+@keyframes slidein {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.detail-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.detail-title {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.detail-close {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  color: var(--mut);
+  flex: none;
+  display: grid;
+  place-items: center;
+}
+
+.detail-close:hover {
+  background: var(--panel);
+  color: var(--ink);
+}
+
+.detail-meta {
+  color: var(--faint);
+  font-size: 12.5px;
+  margin-top: 4px;
+}
+
+.detail-deadline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--mut);
+}
+
+.lbl-strong {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.countdown {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  font-size: 13.5px;
+}
+
+.countdown b {
+  font-weight: 700;
+}
+
+.countdown.urgent,
+.countdown.over {
+  color: var(--red);
+}
+
+/* 집중 포인트 — 빨간 한 줄 */
+.focus-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.focus-badge {
+  flex: none;
+  background: var(--red);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 6px;
+  padding: 2.5px 8px;
+  margin-top: 1px;
+}
+
+.focus-text {
+  color: var(--red);
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.focus-wait {
+  color: var(--faint);
+}
+
+/* 사이트 미리보기 */
+.preview-wrap {
+  margin-top: 12px;
+}
+
+.preview-link {
+  display: block;
+}
+
+.preview-shot {
+  width: 100%;
+  max-height: 300px;
+  object-fit: cover;
+  object-position: top;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  display: block;
+  transition: filter 0.2s ease;
+}
+
+.preview-link:hover .preview-shot {
+  filter: brightness(0.96);
+}
+
+.preview-skeleton {
+  height: 180px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: var(--faint);
+  font-size: 12.5px;
+  background:
+    linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.7) 50%, transparent 70%) var(--panel);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.preview-note {
+  font-size: 11.5px;
+  color: var(--faint);
+  margin-top: 5px;
+}
+
+.preview-note a {
+  color: var(--blue);
+  font-weight: 600;
+}
+
+/* 상세 정보 rows */
+.detail-rows {
+  margin-top: 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.d-row {
+  display: flex;
+  gap: 12px;
+  padding: 9px 12px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--ink);
+}
+
+.d-row:last-child {
+  border-bottom: none;
+}
+
+.d-key {
+  flex: none;
+  width: 64px;
+  color: var(--faint);
+  font-weight: 600;
+}
+
+.detail-body {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--mut);
+  max-height: 200px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
+.detail-links {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: wrap;
 }
 
 /* ── 빈 상태 ─────────────────────────────── */
@@ -972,6 +1272,26 @@ select.filter {
 
   .result-card {
     padding: 12px 13px 11px;
+  }
+
+  /* 모바일: 상세 패널이 리스트 위로 전체 폭 */
+  .results-area {
+    flex-direction: column;
+  }
+
+  .results-area.open .result-list {
+    flex: 1;
+    width: 100%;
+  }
+
+  .detail-panel {
+    order: -1;
+    width: 100%;
+    position: static;
+  }
+
+  .preview-frame {
+    height: 220px;
   }
 
   .footer-inner {

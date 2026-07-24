@@ -173,6 +173,25 @@ export default function App() {
   }, [debounced, filtered, activeLlm]);
   const maxScore = results[0]?.score ?? 1;
 
+  // ── 정렬 (기본: 마감 임박순) ──
+  type SortMode = "deadline" | "relevance" | "newest" | "prize";
+  const [sortMode, setSortMode] = useState<SortMode>("deadline");
+
+  const sortedResults = useMemo(() => {
+    const arr = [...results];
+    if (sortMode === "deadline") {
+      arr.sort((a, b) =>
+        (a.notice.pbanc_rcpt_end_dt ?? "9999") < (b.notice.pbanc_rcpt_end_dt ?? "9999") ? -1 : 1,
+      );
+    } else if (sortMode === "newest") {
+      arr.sort((a, b) =>
+        (a.notice.pbanc_rcpt_bgng_dt ?? "") > (b.notice.pbanc_rcpt_bgng_dt ?? "") ? -1 : 1,
+      );
+    }
+    // relevance/prize: matchWithKeywords 기본 정렬(관련도순) 유지 — 국내 공고엔 상금 데이터가 없음
+    return arr;
+  }, [results, sortMode]);
+
   // ── 공고 선택 → 상세 드로어 (미리보기 + 카운트다운 + 집중포인트) ──
   const [selected, setSelected] = useState<MatchResult | null>(null);
   const [selectedPinned, setSelectedPinned] = useState(false); // 저장함에서 연 경우
@@ -256,7 +275,7 @@ export default function App() {
     fetchGlobalOpportunities().then(setGlobalOpps).catch(() => {});
   }, []);
 
-  const globalMatches = useMemo(() => {
+  const globalMatchesRaw = useMemo(() => {
     if (!debounced.trim() || globalOpps.length === 0) return [];
     const enKeys =
       activeLlm?.keywords_en && activeLlm.keywords_en.length > 0
@@ -273,6 +292,22 @@ export default function App() {
       .sort((a, b) => b.score - a.score)
       .slice(0, 5);
   }, [debounced, globalOpps, activeLlm]);
+
+  const globalMatches = useMemo(() => {
+    const arr = [...globalMatchesRaw];
+    const days = (t: string | null | undefined) => {
+      const m = t?.match(/(\d+)\s*day/);
+      if (m) return Number(m[1]);
+      return t?.includes("hour") || t?.includes("minute") ? 0 : 999;
+    };
+    const prize = (p: string) => Number((p.match(/[\d,]+/)?.[0] ?? "0").replace(/,/g, ""));
+    if (sortMode === "deadline") {
+      arr.sort((a, b) => days(a.g.deadline_text) - days(b.g.deadline_text));
+    } else if (sortMode === "prize") {
+      arr.sort((a, b) => prize(b.g.prize) - prize(a.g.prize));
+    }
+    return arr;
+  }, [globalMatchesRaw, sortMode]);
 
   // 상위 결과 상세를 미리 받아 마감시각("오후 4시")을 리스트에도 표시
   useEffect(() => {
@@ -621,6 +656,28 @@ export default function App() {
               {syncNote && <span className="sync-note">{syncNote}</span>}
             </div>
 
+            {results.length > 0 && (
+              <div className="sort-row">
+                {(
+                  [
+                    ["deadline", "마감 임박순"],
+                    ["relevance", "관련도순"],
+                    ["newest", "최신 등록순"],
+                    ["prize", "상금 높은순"],
+                  ] as const
+                ).map(([k, label]) => (
+                  <button
+                    key={k}
+                    className={`sort-chip${sortMode === k ? " active" : ""}`}
+                    onClick={() => setSortMode(k)}
+                    title={k === "prize" ? "상금 정보가 있는 글로벌 프로그램 기준" : undefined}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {results.length === 0 ? (
               <div className="empty-card">
                 <div className="big">
@@ -632,7 +689,7 @@ export default function App() {
               </div>
             ) : (
               <div className="result-list">
-                {results.map((r, i) => {
+                {sortedResults.map((r, i) => {
                   const sn = r.notice.pbanc_sn;
                   const d = daysLeft(r.notice.pbanc_rcpt_end_dt);
                   const dt = detailMap[sn] ? parseDeadlineTime(detailMap[sn].pbanc_ctnt) : null;

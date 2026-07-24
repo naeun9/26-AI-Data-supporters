@@ -1261,6 +1261,35 @@ select.filter {
   background: #fef2f2;
 }
 
+/* ── 정렬 칩 ─────────────────────────────── */
+.sort-row {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.sort-chip {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 5px 13px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--mut);
+  box-shadow: var(--shadow);
+}
+
+.sort-chip:hover {
+  border-color: #c9c9cf;
+  color: var(--ink);
+}
+
+.sort-chip.active {
+  background: #18181b;
+  border-color: #18181b;
+  color: #fff;
+}
+
 /* ── 실시간 동기화 티커 ─────────────────────────────── */
 .sync-note {
   margin-left: auto;

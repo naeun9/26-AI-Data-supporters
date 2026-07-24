@@ -23,6 +23,14 @@ CREATE TABLE IF NOT EXISTS users (
     nickname      TEXT NOT NULL,
     created_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
+CREATE TABLE IF NOT EXISTS login_events (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER,
+    email      TEXT,
+    nickname   TEXT,
+    kind       TEXT NOT NULL,   -- signup | login | google
+    at         TEXT NOT NULL DEFAULT (datetime('now'))
+);
 """
 
 
@@ -62,3 +70,58 @@ def find_user_by_id(user_id: int) -> dict | None:
     with get_conn() as conn:
         row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
         return dict(row) if row else None
+
+
+# ── 관리자용: 이용 이벤트 기록 / 조회 ──────────────────────────────
+def log_event(kind: str, user: dict | None = None) -> None:
+    try:
+        with get_conn() as conn:
+            conn.execute(
+                "INSERT INTO login_events (user_id, email, nickname, kind) VALUES (?, ?, ?, ?)",
+                (
+                    user.get("id") if user else None,
+                    user.get("email") if user else None,
+                    user.get("nickname") if user else None,
+                    kind,
+                ),
+            )
+    except sqlite3.Error:
+        pass  # 로깅 실패가 본 기능(로그인)을 막지 않도록
+
+
+def list_users() -> list[dict]:
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT id, email, nickname, created_at FROM users ORDER BY id DESC"
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def recent_events(limit: int = 100) -> list[dict]:
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT kind, email, nickname, at FROM login_events ORDER BY id DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def admin_stats() -> dict:
+    with get_conn() as conn:
+        total = conn.execute("SELECT COUNT(*) c FROM users").fetchone()["c"]
+        today_signups = conn.execute(
+            "SELECT COUNT(*) c FROM users WHERE date(created_at) = date('now')"
+        ).fetchone()["c"]
+        logins = conn.execute(
+            "SELECT COUNT(*) c FROM login_events WHERE kind IN ('login','google')"
+        ).fetchone()["c"]
+        logins_today = conn.execute(
+            "SELECT COUNT(*) c FROM login_events "
+            "WHERE kind IN ('login','google') AND date(at) = date('now')"
+        ).fetchone()["c"]
+        return {
+            "total_users": total,
+            "today_signups": today_signups,
+            "total_logins": logins,
+            "logins_today": logins_today,
+        }

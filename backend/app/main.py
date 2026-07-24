@@ -12,7 +12,7 @@ import httpx
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 
-from . import auth, bizinfo, chat, config, db, fields, global_sources
+from . import admin, auth, bizinfo, chat, config, db, fields, global_sources
 from .industries import tag_industries
 from .kised_client import KisedClient, extract_items
 
@@ -40,6 +40,7 @@ app.include_router(auth.router)
 app.include_router(chat.router)
 app.include_router(global_sources.router)
 app.include_router(bizinfo.router)
+app.include_router(admin.router)
 
 client = KisedClient()
 

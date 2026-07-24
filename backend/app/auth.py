@@ -50,6 +50,7 @@ def signup(body: SignupBody):
         raise HTTPException(409, "이미 가입된 이메일입니다.")
 
     user = db.create_user(email, security.hash_password(body.password), nickname)
+    db.log_event("signup", user)
     token = security.create_token(user["id"], user["email"])
     return {"token": token, "user": _public_user(user)}
 
@@ -62,6 +63,7 @@ def login(body: LoginBody):
         # 계정 존재 여부를 구분해서 알려주지 않음 (계정 탐색 방지)
         raise HTTPException(401, "이메일 또는 비밀번호가 올바르지 않습니다.")
 
+    db.log_event("login", user)
     token = security.create_token(user["id"], user["email"])
     return {"token": token, "user": _public_user(user)}
 
@@ -118,7 +120,9 @@ def google_login(body: GoogleBody):
         except httpx.HTTPError:
             pass
         user = db.create_user(email, security.hash_password(secrets.token_urlsafe(32)), nickname)
+        db.log_event("signup", user)
 
+    db.log_event("google", user)
     token = security.create_token(user["id"], user["email"])
     return {"token": token, "user": _public_user(user)}
 

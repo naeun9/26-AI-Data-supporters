@@ -19,6 +19,9 @@ JWT_SECRET: str = os.getenv("JWT_SECRET", "dev-secret-change-me")
 # 비어 있으면 프론트의 구글 로그인 버튼이 "설정 필요" 안내를 띄운다.
 GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
 
+# 관리자 페이지(/admin) 접근 비밀번호 — 배포 시 ADMIN_PASSWORD 환경변수로 교체 권장
+ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD", "cjm9887@")
+
 BASE_URL = "https://apis.data.go.kr/B552735"
 
 # 서비스(도메인)별 엔드포인트 3종

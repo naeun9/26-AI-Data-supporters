@@ -10,6 +10,7 @@ const MODEL = "gemini-2.5-flash";
 
 export interface Analysis {
   keywords: string[];
+  keywords_en: string[];
   category: string;
   comment: string;
 }
@@ -17,10 +18,11 @@ export interface Analysis {
 const PROMPT = `당신은 한국 창업지원사업(K-Startup) 매칭 서비스의 분석 엔진입니다.
 사용자가 적은 사업/아이템 설명을 읽고 — 링크(URL)가 포함되어 있으면 그 페이지 내용까지 참고해서 — 아래 JSON 하나만 출력하세요. 다른 텍스트는 절대 쓰지 마세요.
 
-{"keywords": ["..."], "category": "...", "comment": "..."}
+{"keywords": ["..."], "keywords_en": ["..."], "category": "...", "comment": "..."}
 
 규칙:
 - keywords: 지원사업 공고 검색에 쓸 한국어 핵심 키워드 5~10개. 업종/분야(예: 반도체, 푸드테크), 기술(예: AI, IoT), 제품 형태(예: 앱, 하드웨어), 창업 단계(예: 예비창업자, 청년), 지역이 있으면 지역명. 조사 없는 명사형으로.
+- keywords_en: 글로벌 스타트업 프로그램(해커톤/액셀러레이터) 검색용 영어 키워드 4~8개. 소문자. (예: "ai", "healthcare", "fintech", "hardware")
 - category: 사업의 정확한 분야 한두 단어. 소프트웨어와 하드웨어를 혼동하지 말 것 (예: "AI 반도체"는 소프트웨어 서비스가 아니라 반도체/하드웨어).
 - comment: 매칭 캐릭터가 사용자에게 던질 한 문장. 친근한 존댓말, 이모지 금지, 60자 이내. 분야를 정확히 짚고 그 분야 특화 지원을 찾아보겠다는 톤.
   좋은 예: "AI 반도체라니 딥테크네요! 하드웨어·팹리스 특화 지원을 찾아볼게요."
@@ -115,6 +117,10 @@ export async function analyzeItem(text: string, signal?: AbortSignal): Promise<A
         .filter((k): k is string => typeof k === "string" && k.trim().length > 0)
         .map((k) => k.trim())
         .slice(0, 12),
+      keywords_en: (Array.isArray(parsed.keywords_en) ? parsed.keywords_en : [])
+        .filter((k): k is string => typeof k === "string" && k.trim().length > 0)
+        .map((k) => k.trim().toLowerCase())
+        .slice(0, 10),
       category: typeof parsed.category === "string" ? parsed.category : "",
       comment: parsed.comment.trim(),
     };

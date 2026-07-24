@@ -1,6 +1,17 @@
 import { useEffect, useState } from "react";
+import { shareToKakao } from "./kakao";
 import { deadlineDate, formatDeadlineTime, parseDeadlineTime } from "./matching";
 import type { AnnouncementDetail, MatchResult } from "./types";
+
+/** 사이트 도메인 파비콘 (구글 파비콘 서비스) */
+export function faviconUrl(u: string | null, size = 64): string | null {
+  if (!u) return null;
+  try {
+    return `https://www.google.com/s2/favicons?domain=${new URL(u).hostname}&sz=${size}`;
+  } catch {
+    return null;
+  }
+}
 
 /** 초 단위로 흘러가는 마감 카운트다운 */
 function Countdown({ end }: { end: Date }) {
@@ -73,13 +84,42 @@ interface Props {
   detail: AnnouncementDetail | null;
   focus: string | null;
   focusBusy: boolean;
+  saved: boolean;
+  onToggleSave: () => void;
   onClose: () => void;
 }
 
-export function DetailPanel({ sel, detail, focus, focusBusy, onClose }: Props) {
+export function DetailPanel({ sel, detail, focus, focusBusy, saved, onToggleSave, onClose }: Props) {
   const n = sel.notice;
   const time = parseDeadlineTime(detail?.pbanc_ctnt ?? null);
   const end = deadlineDate(n.pbanc_rcpt_end_dt, time);
+  const [shareMsg, setShareMsg] = useState<string | null>(null);
+  const icon = faviconUrl(n.detl_pg_url);
+
+  // 드로어 열려있는 동안 배경 스크롤 잠금 + ESC로 닫기
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [onClose]);
+
+  async function handleShare() {
+    const msg = await shareToKakao({
+      title: n.biz_pbanc_nm,
+      description: [n.pbanc_ntrp_nm, n.supt_biz_clsfc, `마감 ${fmtDate(n.pbanc_rcpt_end_dt)}`]
+        .filter(Boolean)
+        .join(" · "),
+      url: n.detl_pg_url ?? "https://changup-item-matcher.vercel.app",
+    });
+    setShareMsg(msg ?? "카카오톡 공유 창을 열었어요!");
+  }
 
   const applyMethods = detail
     ? [
@@ -93,13 +133,23 @@ export function DetailPanel({ sel, detail, focus, focusBusy, onClose }: Props) {
     : [];
 
   return (
-    <div className="detail-panel">
-      <div className="detail-head">
-        <div className="detail-title">{n.biz_pbanc_nm}</div>
-        <button className="detail-close" onClick={onClose} aria-label="닫기">
-          ✕
-        </button>
-      </div>
+    <>
+      <div className="drawer-backdrop" onClick={onClose} />
+      <div className="detail-panel" role="dialog" aria-modal="true">
+        <div className="detail-head">
+          {icon && <img className="detail-favicon" src={icon} alt="" />}
+          <div className="detail-title">{n.biz_pbanc_nm}</div>
+          <button
+            className={`save-btn${saved ? " on" : ""}`}
+            onClick={onToggleSave}
+            title={saved ? "저장 해제" : "저장"}
+          >
+            {saved ? "★ 저장됨" : "☆ 저장"}
+          </button>
+          <button className="detail-close" onClick={onClose} aria-label="닫기">
+            ✕
+          </button>
+        </div>
       <div className="detail-meta">
         {[n.pbanc_ntrp_nm, n.supt_biz_clsfc, n.supt_regin].filter(Boolean).join(" · ")}
       </div>
@@ -199,7 +249,12 @@ export function DetailPanel({ sel, detail, focus, focusBusy, onClose }: Props) {
             사업 안내 ↗
           </a>
         )}
+        <button className="btn kakao-btn" onClick={handleShare}>
+          카카오톡 공유
+        </button>
       </div>
-    </div>
+      {shareMsg && <div className="share-msg">{shareMsg}</div>}
+      </div>
+    </>
   );
 }

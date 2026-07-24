@@ -128,13 +128,23 @@ button {
   gap: 7px;
   white-space: nowrap;
   flex: none;
-  background: #18181b;
+  /* 오로라 그라디언트가 흐르는 실시간 배지 */
+  background: linear-gradient(100deg, #0ea5e9, #6366f1, #10b981, #06b6d4, #0ea5e9);
+  background-size: 320% 100%;
+  animation: aurora 7s linear infinite;
   color: #fff;
   border-radius: 999px;
   padding: 5px 13px 5px 10px;
   font-size: 12.5px;
   font-weight: 600;
   margin-left: 4px;
+  box-shadow: 0 0 14px rgba(99, 102, 241, 0.35);
+}
+
+@keyframes aurora {
+  to {
+    background-position: 320% 0;
+  }
 }
 
 .live-pill .dot {
@@ -878,29 +888,94 @@ select.filter {
   transition: width 0.4s ease;
 }
 
-/* ── 상세 패널 ─────────────────────────────── */
+/* ── 상세 드로어 — 브라우저 오른쪽 여백까지 크게 확장 ─────────────────────────────── */
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(24, 24, 27, 0.32);
+  backdrop-filter: blur(2px);
+  z-index: 200;
+  animation: fadein 0.3s ease both;
+}
+
 .detail-panel {
-  flex: 1;
-  min-width: 0;
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100dvh;
+  width: min(720px, 94vw);
   background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 16px 18px;
-  animation: slidein 0.4s cubic-bezier(0.21, 0.6, 0.35, 1) both;
-  position: sticky;
-  top: 130px;
+  border-left: 1px solid var(--line);
+  box-shadow: -18px 0 50px rgba(24, 24, 27, 0.18);
+  padding: 22px 26px 30px;
+  overflow-y: auto;
+  z-index: 201;
+  animation: slidein 0.45s cubic-bezier(0.32, 0.72, 0.25, 1) both;
+}
+
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slidein {
   from {
-    opacity: 0;
-    transform: translateX(24px);
+    transform: translateX(100%);
   }
   to {
-    opacity: 1;
     transform: translateX(0);
   }
+}
+
+.detail-favicon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 3px;
+  flex: none;
+}
+
+.save-btn {
+  flex: none;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 8px;
+  padding: 5px 11px;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--mut);
+}
+
+.save-btn:hover {
+  background: var(--panel);
+}
+
+.save-btn.on {
+  border-color: #fbbf24;
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.kakao-btn {
+  background: #fee500;
+  border-color: #fee500;
+  color: #181600;
+}
+
+.kakao-btn:hover {
+  background: #f5dc00;
+}
+
+.share-msg {
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: var(--mut);
 }
 
 .detail-head {
@@ -1112,6 +1187,135 @@ select.filter {
   flex-wrap: wrap;
 }
 
+/* ── 로그인 게이팅 ─────────────────────────────── */
+.locked-card {
+  filter: blur(5px) saturate(0.8);
+  opacity: 0.55;
+  pointer-events: none;
+  user-select: none;
+}
+
+.unlock-card {
+  border: 1.5px dashed var(--blue);
+  background: rgba(37, 99, 235, 0.05);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  text-align: center;
+}
+
+.unlock-title {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* ── 저장한 사업 칩 ─────────────────────────────── */
+.saved-card {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.saved-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 9px;
+  padding: 8px 11px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: left;
+  width: 100%;
+}
+
+.saved-chip:hover {
+  border-color: var(--blue);
+  background: #f8faff;
+}
+
+.saved-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.saved-x {
+  flex: none;
+  color: var(--faint);
+  font-size: 11px;
+  padding: 2px 4px;
+  border-radius: 5px;
+}
+
+.saved-x:hover {
+  color: var(--red);
+  background: #fef2f2;
+}
+
+/* ── 실시간 동기화 티커 ─────────────────────────────── */
+.sync-note {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--green);
+  animation: rise 0.3s ease both;
+}
+
+/* ── 결과 카드 파비콘 / 글로벌 카드 ─────────────────────────────── */
+.result-favicon {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1px solid var(--line-soft);
+  background: #fff;
+  padding: 2px;
+  flex: none;
+  margin-top: 1px;
+}
+
+.global-card {
+  display: flex;
+  gap: 13px;
+  align-items: flex-start;
+  text-decoration: none;
+}
+
+.global-thumb {
+  width: 58px;
+  height: 58px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  flex: none;
+}
+
+.global-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.source-badge {
+  margin-left: auto;
+  flex: none;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: capitalize;
+  background: #eef2ff;
+  color: #4f46e5;
+  border: 1px solid #e0e7ff;
+  border-radius: 6px;
+  padding: 3px 8px;
+}
+
 /* ── 빈 상태 ─────────────────────────────── */
 .empty-card {
   border: 1.5px dashed #d4d4d8;
@@ -1274,24 +1478,14 @@ select.filter {
     padding: 12px 13px 11px;
   }
 
-  /* 모바일: 상세 패널이 리스트 위로 전체 폭 */
-  .results-area {
-    flex-direction: column;
-  }
-
-  .results-area.open .result-list {
-    flex: 1;
-    width: 100%;
-  }
-
+  /* 모바일: 드로어가 화면 전체 폭 */
   .detail-panel {
-    order: -1;
-    width: 100%;
-    position: static;
+    width: 100vw;
+    padding: 16px 14px 26px;
   }
 
-  .preview-frame {
-    height: 220px;
+  .preview-shot {
+    max-height: 220px;
   }
 
   .footer-inner {

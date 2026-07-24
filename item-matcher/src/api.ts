@@ -19,6 +19,11 @@ function decodeEntities(s: string | null): string | null {
 
 export async function fetchAnnouncements(): Promise<Announcement[]> {
   if (cache) return cache;
+  return refreshAnnouncements();
+}
+
+/** 캐시 무시하고 서버에서 최신 공고를 다시 받아온다 (실시간 동기화용) */
+export async function refreshAnnouncements(): Promise<Announcement[]> {
   const res = await fetch(`${API_BASE}/api/announcement/open`);
   if (!res.ok) throw new Error(`공고 API 오류: ${res.status}`);
   const data = (await res.json()) as { items: Announcement[] };
@@ -28,6 +33,27 @@ export async function fetchAnnouncements(): Promise<Announcement[]> {
     pbanc_ntrp_nm: decodeEntities(n.pbanc_ntrp_nm),
   }));
   return cache;
+}
+
+export interface GlobalOpportunity {
+  source: string;
+  id: string;
+  title: string;
+  url: string;
+  thumbnail: string;
+  organization: string | null;
+  themes: string[];
+  deadline_text: string | null;
+  dates: string | null;
+  prize: string;
+  location: string | null;
+}
+
+export async function fetchGlobalOpportunities(): Promise<GlobalOpportunity[]> {
+  const res = await fetch(`${API_BASE}/api/global/opportunities`);
+  if (!res.ok) return [];
+  const data = (await res.json().catch(() => null)) as { items?: GlobalOpportunity[] } | null;
+  return data?.items ?? [];
 }
 
 const detailCache = new Map<number, Promise<AnnouncementDetail | null>>();

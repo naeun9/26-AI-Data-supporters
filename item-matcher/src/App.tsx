@@ -3,12 +3,15 @@ import {
   API_BASE,
   fetchAnnouncementDetail,
   fetchAnnouncements,
+  fetchGlobalOpportunities,
   fetchGoogleClientId,
   googleLoginApi,
+  refreshAnnouncements,
 } from "./api";
+import type { GlobalOpportunity } from "./api";
 import { Buddy, IDLE_LINE, THINKING_LINES, verdictLine } from "./Buddy";
 import type { Mood } from "./Buddy";
-import { DetailPanel } from "./DetailPanel";
+import { DetailPanel, faviconUrl } from "./DetailPanel";
 import { analyzeItem, focusPoint } from "./gemini";
 import type { Analysis } from "./gemini";
 import { getGoogleAccessToken } from "./google";
@@ -37,7 +40,40 @@ function highlightSegments(t: string) {
 }
 
 const STORAGE_KEY = "matcher.profile";
+const SAVED_KEY = "matcher.saved";
 const MAIN_SITE = "https://26-ai-data-supporters.vercel.app";
+const MCP_GUIDE = "https://github.com/naeun9/26-AI-Data-supporters/tree/main/mcp-server";
+
+/** 비로그인 무료 사용 한도 — 상위 2건만 노출, 검색 8회까지 */
+const FREE_VISIBLE = 2;
+const FREE_QUERIES = 8;
+
+// localStorage + 쿠키 이중 기록 — 하나만 지워서는 초기화 안 되게
+function readQuota(): number {
+  const ls = Number(localStorage.getItem("matcher.quota") ?? "0") || 0;
+  const ck = Number((document.cookie.match(/(?:^|; )mq=(\d+)/) ?? [])[1] ?? "0") || 0;
+  return Math.max(ls, ck);
+}
+
+function bumpQuota(): number {
+  const q = readQuota() + 1;
+  localStorage.setItem("matcher.quota", String(q));
+  document.cookie = `mq=${q};max-age=31536000;path=/;SameSite=Lax`;
+  return q;
+}
+
+interface SavedItem {
+  sn: number;
+  title: string;
+}
+
+function loadSaved(): SavedItem[] {
+  try {
+    return JSON.parse(localStorage.getItem(SAVED_KEY) ?? "[]") as SavedItem[];
+  } catch {
+    return [];
+  }
+}
 
 function loadProfile(): Profile | null {
   try {
@@ -138,11 +174,106 @@ export default function App() {
   }, [debounced, filtered, activeLlm]);
   const maxScore = results[0]?.score ?? 1;
 
-  // ── 공고 선택 → 상세 패널 (미리보기 + 카운트다운 + 집중포인트) ──
+  // ── 공고 선택 → 상세 드로어 (미리보기 + 카운트다운 + 집중포인트) ──
   const [selected, setSelected] = useState<MatchResult | null>(null);
+  const [selectedPinned, setSelectedPinned] = useState(false); // 저장함에서 연 경우
   const [detailMap, setDetailMap] = useState<Record<number, AnnouncementDetail>>({});
   const [focus, setFocus] = useState<{ sn: number; line: string } | null>(null);
   const [focusBusy, setFocusBusy] = useState(false);
+
+  // ── 로그인 게이팅: 비로그인은 상위 2건 + 무료 검색 횟수 제한 ──
+  const [quota, setQuota] = useState(readQuota);
+  const locked = !profile;
+  const exhausted = locked && quota > FREE_QUERIES;
+
+  useEffect(() => {
+    if (!debounced.trim() || profile) return;
+    setQuota(bumpQuota());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debounced]);
+
+  // ── 사업 저장함 ──
+  const [saved, setSaved] = useState<SavedItem[]>(loadSaved);
+
+  useEffect(() => {
+    localStorage.setItem(SAVED_KEY, JSON.stringify(saved));
+  }, [saved]);
+
+  function toggleSave(r: MatchResult) {
+    const sn = r.notice.pbanc_sn;
+    setSaved((s) =>
+      s.some((x) => x.sn === sn)
+        ? s.filter((x) => x.sn !== sn)
+        : [{ sn, title: r.notice.biz_pbanc_nm }, ...s].slice(0, 30),
+    );
+  }
+
+  function openSaved(item: SavedItem) {
+    const notice = announcements?.find((a) => a.pbanc_sn === item.sn);
+    if (!notice) {
+      setSaved((s) => s.filter((x) => x.sn !== item.sn));
+      return;
+    }
+    setSelected({ notice, score: 0, matched: [] });
+    setSelectedPinned(true);
+  }
+
+  // ── 실시간 동기화 티커 + 주기적 재수집 ──
+  const [syncNote, setSyncNote] = useState<string | null>(null);
+  const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function flashSync(msg: string, ms = 3000) {
+    if (syncTimer.current) clearTimeout(syncTimer.current);
+    setSyncNote(msg);
+    syncTimer.current = setTimeout(() => setSyncNote(null), ms);
+  }
+
+  useEffect(() => {
+    if (debounced.trim() && results.length > 0) flashSync(`↻ ${results.length}건 반영됨`, 2500);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [results.length, debounced]);
+
+  useEffect(() => {
+    const iv = setInterval(async () => {
+      flashSync("공고 소스 동기화 중…", 6000);
+      try {
+        const prev = announcements?.length ?? 0;
+        const fresh = await refreshAnnouncements();
+        setAnnouncements(fresh);
+        const diff = fresh.length - prev;
+        flashSync(diff !== 0 ? `새 공고 ${Math.abs(diff)}건 반영됨` : "✓ 최신 상태", 3500);
+      } catch {
+        flashSync("동기화 실패 — 잠시 후 재시도", 3000);
+      }
+    }, 90_000);
+    return () => clearInterval(iv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [announcements?.length]);
+
+  // ── 글로벌 프로그램 (Devpost 등) ──
+  const [globalOpps, setGlobalOpps] = useState<GlobalOpportunity[]>([]);
+
+  useEffect(() => {
+    fetchGlobalOpportunities().then(setGlobalOpps).catch(() => {});
+  }, []);
+
+  const globalMatches = useMemo(() => {
+    if (!debounced.trim() || globalOpps.length === 0) return [];
+    const enKeys =
+      activeLlm?.keywords_en && activeLlm.keywords_en.length > 0
+        ? activeLlm.keywords_en
+        : (debounced.toLowerCase().match(/[a-z0-9]{2,}/g) ?? []);
+    if (enKeys.length === 0) return [];
+    return globalOpps
+      .map((g) => {
+        const hay = `${g.title} ${g.themes.join(" ")} ${g.organization ?? ""}`.toLowerCase();
+        const hit = enKeys.filter((k) => hay.includes(k));
+        return { g, score: hit.length, hit };
+      })
+      .filter((x) => x.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+  }, [debounced, globalOpps, activeLlm]);
 
   // 상위 결과 상세를 미리 받아 마감시각("오후 4시")을 리스트에도 표시
   useEffect(() => {
@@ -156,12 +287,16 @@ export default function App() {
     }
   }, [results]);
 
-  // 선택 공고가 결과에서 사라지면 패널 닫기
+  // 선택 공고가 결과에서 사라지면 패널 닫기 (저장함에서 연 경우는 유지)
   useEffect(() => {
-    if (selected && !results.some((r) => r.notice.pbanc_sn === selected.notice.pbanc_sn)) {
+    if (
+      selected &&
+      !selectedPinned &&
+      !results.some((r) => r.notice.pbanc_sn === selected.notice.pbanc_sn)
+    ) {
       setSelected(null);
     }
-  }, [results, selected]);
+  }, [results, selected, selectedPinned]);
 
   // 선택하면 상세 로드 + AI 집중포인트 생성
   useEffect(() => {
@@ -365,9 +500,7 @@ export default function App() {
             </div>
 
             <div className="card">
-              <div className="card-head">
-                <span className="ic">{IconPencil}</span> 아이템 설명
-              </div>
+              <div className="card-head">아이템 설명</div>
               <div className="input-wrap">
                 {!text.trim() && (
                   <div className="guide-box" aria-hidden="true">
@@ -431,6 +564,28 @@ export default function App() {
               </div>
             </div>
 
+            {saved.length > 0 && (
+              <>
+                <span className="panel-label">저장한 사업</span>
+                <div className="card saved-card">
+                  {saved.map((s) => (
+                    <button key={s.sn} className="saved-chip" onClick={() => openSaved(s)}>
+                      <span className="saved-title">{s.title}</span>
+                      <span
+                        className="saved-x"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSaved((list) => list.filter((x) => x.sn !== s.sn));
+                        }}
+                      >
+                        ✕
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+
             <span className="panel-label">매칭 필터</span>
             <div className="card">
               <div className="card-row">
@@ -469,6 +624,7 @@ export default function App() {
                 맞춤 지원 프로그램
               </span>
               {results.length > 0 && <span className="count">{results.length}</span>}
+              {syncNote && <span className="sync-note">{syncNote}</span>}
             </div>
 
             {results.length === 0 ? (
@@ -481,27 +637,57 @@ export default function App() {
                   : "입력하는 즉시 맞춤 지원사업이 여기에 실시간으로 나타나요."}
               </div>
             ) : (
-              <div className={`results-area${selected ? " open" : ""}`}>
-                <div className="result-list">
-                  {results.map((r, i) => {
-                    const sn = r.notice.pbanc_sn;
-                    const d = daysLeft(r.notice.pbanc_rcpt_end_dt);
-                    const dt = detailMap[sn] ? parseDeadlineTime(detailMap[sn].pbanc_ctnt) : null;
-                    const kws = r.matched.slice(0, 4);
-                    const isSel = selected?.notice.pbanc_sn === sn;
-                    return (
+              <div className="result-list">
+                {results.map((r, i) => {
+                  const sn = r.notice.pbanc_sn;
+                  const d = daysLeft(r.notice.pbanc_rcpt_end_dt);
+                  const dt = detailMap[sn] ? parseDeadlineTime(detailMap[sn].pbanc_ctnt) : null;
+                  const kws = r.matched.slice(0, 4);
+                  const isSel = selected?.notice.pbanc_sn === sn;
+                  const isLocked = locked && (exhausted || i >= FREE_VISIBLE);
+                  const icon = faviconUrl(r.notice.detl_pg_url, 32);
+                  return (
+                    <div key={sn} style={{ display: "contents" }}>
+                      {locked && !exhausted && i === FREE_VISIBLE && (
+                        <div className="unlock-card">
+                          <div className="unlock-title">
+                            🔒 나머지 {results.length - FREE_VISIBLE}건은 로그인하면 전부 보여요
+                          </div>
+                          <button className="btn primary" onClick={handleGoogleLogin} disabled={authBusy}>
+                            <GoogleIcon /> 구글로 3초 로그인하고 전부 확인하기
+                          </button>
+                        </div>
+                      )}
+                      {locked && exhausted && i === 0 && (
+                        <div className="unlock-card">
+                          <div className="unlock-title">
+                            🔒 무료 미리보기를 다 썼어요 — 로그인하면 계속 쓸 수 있어요
+                          </div>
+                          <button className="btn primary" onClick={handleGoogleLogin} disabled={authBusy}>
+                            <GoogleIcon /> 구글로 3초 로그인
+                          </button>
+                        </div>
+                      )}
                       <div
-                        className={`result-card${isSel ? " selected" : ""}`}
-                        key={sn}
+                        className={`result-card${isSel ? " selected" : ""}${isLocked ? " locked-card" : ""}`}
                         style={{ "--i": i } as React.CSSProperties}
-                        onClick={() => setSelected(isSel ? null : r)}
+                        onClick={() => {
+                          if (isLocked) return;
+                          setSelectedPinned(false);
+                          setSelected(isSel ? null : r);
+                        }}
                         role="button"
-                        tabIndex={0}
+                        tabIndex={isLocked ? -1 : 0}
+                        aria-hidden={isLocked}
                         onKeyDown={(e) => {
-                          if (e.key === "Enter") setSelected(isSel ? null : r);
+                          if (e.key === "Enter" && !isLocked) {
+                            setSelectedPinned(false);
+                            setSelected(isSel ? null : r);
+                          }
                         }}
                       >
                         <div className="result-top">
+                          {icon && <img className="result-favicon" src={icon} alt="" />}
                           <span className="result-title">{r.notice.biz_pbanc_nm}</span>
                           {d !== null && (
                             <span className={`dday${d <= 7 ? " urgent" : ""}`}>
@@ -537,21 +723,68 @@ export default function App() {
                           />
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-                {selected && (
-                  <DetailPanel
-                    sel={selected}
-                    detail={detailMap[selected.notice.pbanc_sn] ?? null}
-                    focus={focus?.sn === selected.notice.pbanc_sn ? focus.line : null}
-                    focusBusy={focusBusy}
-                    onClose={() => setSelected(null)}
-                  />
-                )}
+                    </div>
+                  );
+                })}
               </div>
             )}
+
+            {/* 글로벌 프로그램 (Devpost 등) */}
+            {globalMatches.length > 0 && (
+              <>
+                <div className="results-head" style={{ marginTop: 8 }}>
+                  <span className="panel-label" style={{ padding: 0 }}>
+                    🌐 글로벌 프로그램
+                  </span>
+                  <span className="count">{globalMatches.length}</span>
+                </div>
+                <div className="result-list">
+                  {globalMatches.map(({ g, hit }, i) => (
+                    <a
+                      key={g.id}
+                      className="result-card global-card"
+                      style={{ "--i": i } as React.CSSProperties}
+                      href={g.url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {g.thumbnail && <img className="global-thumb" src={g.thumbnail} alt="" />}
+                      <div className="global-body">
+                        <div className="result-top">
+                          <span className="result-title">{g.title}</span>
+                          <span className="source-badge">{g.source}</span>
+                        </div>
+                        <div className="result-meta">
+                          {[g.organization, g.location, g.deadline_text, g.prize && `상금 ${g.prize}`]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </div>
+                        <div className="why-chips" style={{ marginTop: 7 }}>
+                          {hit.slice(0, 4).map((k) => (
+                            <span key={k} className="chip green">
+                              {k}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
+
+          {selected && (
+            <DetailPanel
+              sel={selected}
+              detail={detailMap[selected.notice.pbanc_sn] ?? null}
+              focus={focus?.sn === selected.notice.pbanc_sn ? focus.line : null}
+              focusBusy={focusBusy}
+              saved={saved.some((s) => s.sn === selected.notice.pbanc_sn)}
+              onToggleSave={() => toggleSave(selected)}
+              onClose={() => setSelected(null)}
+            />
+          )}
         </div>
       </main>
 
@@ -565,6 +798,9 @@ export default function App() {
             </a>
             <a href={`${API_BASE}/api/announcement/open`} target="_blank" rel="noreferrer">
               API
+            </a>
+            <a href={MCP_GUIDE} target="_blank" rel="noreferrer">
+              MCP 연동
             </a>
           </span>
         </div>
@@ -591,13 +827,6 @@ function Ic({ children, size = 15 }: { children: React.ReactNode; size?: number 
     </svg>
   );
 }
-
-const IconPencil = (
-  <Ic>
-    <path d="M12 20h9" />
-    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
-  </Ic>
-);
 
 const IconTag = (
   <Ic>

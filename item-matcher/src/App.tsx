@@ -41,7 +41,6 @@ function highlightSegments(t: string) {
 
 const STORAGE_KEY = "matcher.profile";
 const SAVED_KEY = "matcher.saved";
-const MAIN_SITE = "https://26-ai-data-supporters.vercel.app";
 const MCP_GUIDE = "https://github.com/naeun9/26-AI-Data-supporters/tree/main/mcp-server";
 
 /** 비로그인 무료 사용 한도 — 상위 2건만 노출, 검색 8회까지 */
@@ -425,15 +424,9 @@ export default function App() {
     <>
       <header className="topbar">
         <div className="topbar-inner">
-          <a className="logo-mark" href={MAIN_SITE} title="창업메이트 홈">
-            K
-          </a>
-          <a className="crumb crumb-root" href={MAIN_SITE}>
-            <span className="crumb-badge k">K</span> 창업메이트
-          </a>
-          <span className="crumb-sep">/</span>
-          <span className="crumb">
-            <span className="crumb-badge m">M</span> 아이템 매칭
+          <span className="logo-mark">K</span>
+          <span className="crumb" style={{ fontSize: 16, fontWeight: 800 }}>
+            창업메이트
           </span>
           <span className="live-pill">
             <span className="dot" /> 실시간 매칭
@@ -458,24 +451,6 @@ export default function App() {
         </div>
       </header>
 
-      <nav className="tabs">
-        <div className="tabs-inner">
-          <span className="tab active">매칭</span>
-          <a className="tab" href={`${MAIN_SITE}/notices`}>
-            지원공고
-          </a>
-          <a className="tab" href={`${MAIN_SITE}/chat`}>
-            챗봇
-          </a>
-          <a className="tab" href={`${MAIN_SITE}/test`}>
-            유형검사
-          </a>
-          <a className="tab" href={`${MAIN_SITE}/dashboard`}>
-            창업 현황
-          </a>
-        </div>
-      </nav>
-
       <main className="page">
         <div className="page-head">
           <div className="page-icon">
@@ -487,9 +462,6 @@ export default function App() {
             아이템 매칭<span className="sub">· 실시간</span>
           </h1>
           <div className="page-actions">
-            <a className="btn" href={MAIN_SITE}>
-              창업메이트 홈
-            </a>
             <a className="btn primary" href="https://www.k-startup.go.kr" target="_blank" rel="noreferrer">
               K-Startup ↗
             </a>
@@ -814,7 +786,6 @@ export default function App() {
         <div className="footer-inner">
           <span>창업메이트 © 2026 · Crafted by AI 서포터즈</span>
           <span className="links">
-            <a href={MAIN_SITE}>창업메이트</a>
             <a href="https://www.k-startup.go.kr" target="_blank" rel="noreferrer">
               K-Startup
             </a>
